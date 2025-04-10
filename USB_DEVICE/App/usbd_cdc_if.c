@@ -62,6 +62,7 @@
   */
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
+#define HL_RX_BUFFER_SIZE 2048			//размер буфера приема
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -94,7 +95,11 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+uint8_t lcBuffer[7]; 										// Line coding buffer
+volatile uint8_t rxBuffer[HL_RX_BUFFER_SIZE]; 				// Receive buffer
+volatile uint16_t rxBufferHeadPos = 0; 						// Receive buffer write position
+volatile uint16_t rxBufferTailPos = 0; 						// Receive buffer read position
+extern char data[2048];
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -152,10 +157,21 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 static int8_t CDC_Init_FS(void)
 {
   /* USER CODE BEGIN 3 */
-  /* Set Application Buffers */
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
-  return (USBD_OK);
+	  /* Set Application Buffers */
+	  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
+	  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+
+	  // https://stackoverflow.com/a/26925578
+	  uint32_t baudrate = 115200;
+	  lcBuffer[0] = (uint8_t)(baudrate);
+	  lcBuffer[1] = (uint8_t)(baudrate >> 8);
+	  lcBuffer[2] = (uint8_t)(baudrate >> 16);
+	  lcBuffer[3] = (uint8_t)(baudrate >> 24);
+	  lcBuffer[4] = 0; // 1 Stop bit
+	  lcBuffer[5] = 0; // No parity
+	  lcBuffer[6] = 8; // 8 data bits
+
+	  return (USBD_OK);
   /* USER CODE END 3 */
 }
 
@@ -220,11 +236,26 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
-
+        lcBuffer[0] = pbuf[0];
+        lcBuffer[1] = pbuf[1];
+        lcBuffer[2] = pbuf[2];
+        lcBuffer[3] = pbuf[3];
+        lcBuffer[4] = pbuf[4];
+        lcBuffer[5] = pbuf[5];
+        lcBuffer[6] = pbuf[6];
     break;
 
     case CDC_GET_LINE_CODING:
+        pbuf[0] = lcBuffer[0];
+        pbuf[1] = lcBuffer[1];
+        pbuf[2] = lcBuffer[2];
+        pbuf[3] = lcBuffer[3];
+        pbuf[4] = lcBuffer[4];
+        pbuf[5] = lcBuffer[5];
+        pbuf[6] = lcBuffer[6];
 
+        // Get line coding is invoked when the host connects, clear the RxBuffer when this occurs
+        CDC_FlushRxBuffer_FS();
     break;
 
     case CDC_SET_CONTROL_LINE_STATE:
@@ -261,9 +292,32 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  return (USBD_OK);
+//  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+//	strncpy(data, (char*)Buf, *Len);
+//	data[*Len] = 0;
+//  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+	  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+
+	  uint8_t len = (uint8_t) *Len; // Get length
+	  uint16_t tempHeadPos = rxBufferHeadPos; // Increment temp head pos while writing, then update main variable when complete
+
+	  for (uint32_t i = 0; i < len; i++) {
+	    rxBuffer[tempHeadPos] = Buf[i];
+//	    if (rxBuffer[tempHeadPos] == '\n')
+//	    {
+//	    	return USBD_COMPLTTE;
+//	    }
+	  	tempHeadPos = (uint16_t)((uint16_t)(tempHeadPos + 1) % HL_RX_BUFFER_SIZE);
+	    if (tempHeadPos == rxBufferTailPos)
+	    {
+	      return USBD_FAIL;
+	    }
+	  }
+
+	  rxBufferHeadPos = tempHeadPos;
+	  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+
+	  return (USBD_OK);
   /* USER CODE END 6 */
 }
 
@@ -316,7 +370,48 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+uint8_t CDC_ReadRxBuffer_FS(uint8_t* Buf, uint16_t Len)
+{
+  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
 
+  if (bytesAvailable < Len)
+    return USB_CDC_RX_BUFFER_NO_DATA;
+
+  for (uint16_t i = 0; i < Len; i++) {
+    Buf[i] = rxBuffer[rxBufferTailPos];
+    rxBufferTailPos = (uint16_t)((uint16_t)(rxBufferTailPos + 1) % HL_RX_BUFFER_SIZE);
+  }
+
+  return USB_CDC_RX_BUFFER_OK;
+}
+
+uint8_t CDC_PeekRxBuffer_FS(uint8_t* Buf, uint16_t Len)
+{
+  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
+
+  if (bytesAvailable < Len)
+    return USB_CDC_RX_BUFFER_NO_DATA;
+
+  for (uint8_t i = 0; i < Len; i++) {
+    Buf[i] = rxBuffer[(rxBufferTailPos + i) % HL_RX_BUFFER_SIZE]; // Get data without incrementing the tail position
+  }
+
+  return USB_CDC_RX_BUFFER_OK;
+}
+
+uint16_t CDC_GetRxBufferBytesAvailable_FS()
+{
+  return (uint16_t)(rxBufferHeadPos - rxBufferTailPos) % HL_RX_BUFFER_SIZE;
+}
+
+void CDC_FlushRxBuffer_FS() {
+  for (int i = 0; i < HL_RX_BUFFER_SIZE; i++) {
+    rxBuffer[i] = 0;
+  }
+
+  rxBufferHeadPos = 0;
+  rxBufferTailPos = 0;
+}
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**

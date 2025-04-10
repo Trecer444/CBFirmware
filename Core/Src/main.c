@@ -22,7 +22,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "settings.h"
+#include "usbd_cdc_if.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +51,7 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+uint8_t rxData[2048];			//данные с ком-порта;
 
 /* USER CODE END PV */
 
@@ -109,7 +112,20 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
+	      if (bytesAvailable >= 1706)
+	      {
+	      	uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
+	      	if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
+	      	{
+//	      		while (CDC_Transmit_FS("RECIVED\n", 8) != USBD_OK);
+
+	      	}
+	      	CDC_FlushRxBuffer_FS();
+
+	      }
     /* USER CODE END WHILE */
+
 
     /* USER CODE BEGIN 3 */
   }
