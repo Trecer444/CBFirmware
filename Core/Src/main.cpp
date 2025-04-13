@@ -25,6 +25,7 @@
 #include "settings.h"
 #include "usbd_cdc_if.h"
 #include <string.h>
+#include "outputch.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,7 +35,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RX_LENGHT 			512 				//все равно надо вручную прописать в usbd_cdc_if.h
+#define BYTES_AR_SIZE 		338					//размер передаваемой строки в байтах
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,11 +49,19 @@ ADC_HandleTypeDef hadc1;
 
 CAN_HandleTypeDef hcan1;
 
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim8;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t rxData[2048];			//данные с ком-порта;
+uint8_t rxData[RX_LENGHT];			//данные с ком-порта;
+Param param;
+uint16_t 	secFromStart = 0,
+			msFromStart = 0,
+			updTimer = 0;
 
 /* USER CODE END PV */
 
@@ -62,13 +72,21 @@ static void MX_CAN1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+OutputCh CH1(GPIOB,  14, &htim8);
+OutputCh CH2(GPIOB,  15, &htim8);
+OutputCh CH3(GPIOC,  6, &htim8);
+OutputCh CH4(GPIOC,  7, &htim8);
+OutputCh CH5(GPIOC,  8, &htim8);
+OutputCh CH6(GPIOC,  9, &htim8);
 /* USER CODE END 0 */
 
 /**
@@ -104,28 +122,47 @@ int main(void)
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
+  HAL_Delay(500);
+  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+
+  HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
+  HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
+
+  __enable_irq();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  if (secFromStart == 30)
+	  {
+		  secFromStart = 30;
+	  }
 	  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
-	      if (bytesAvailable >= 1706)
-	      {
-	      	uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
-	      	if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
-	      	{
-//	      		while (CDC_Transmit_FS("RECIVED\n", 8) != USBD_OK);
+	  if (bytesAvailable >= BYTES_AR_SIZE)
+	  {
+		  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
+		  uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
+		  if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
+		  {
+			  uint8_t recived[] = "RECIVED\n";
+			  while (CDC_Transmit_FS(recived, 8) != USBD_OK);
+			  param.setParam((char*)rxData);
 
-	      	}
+		  }
 	      	CDC_FlushRxBuffer_FS();
+	      	HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
 
-	      }
+	  }
+
     /* USER CODE END WHILE */
-
 
     /* USER CODE BEGIN 3 */
   }
@@ -267,6 +304,189 @@ static void MX_CAN1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 35999;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1999;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 359;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 199;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+  * @brief TIM8 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM8_Init(void)
+{
+
+  /* USER CODE BEGIN TIM8_Init 0 */
+
+  /* USER CODE END TIM8_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM8_Init 1 */
+
+  /* USER CODE END TIM8_Init 1 */
+  htim8.Instance = TIM8;
+  htim8.Init.Prescaler = 359;
+  htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim8.Init.Period = 399;
+  htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim8.Init.RepetitionCounter = 0;
+  htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim8, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  if (HAL_TIM_OC_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim8, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM8_Init 2 */
+
+  /* USER CODE END TIM8_Init 2 */
+  HAL_TIM_MspPostInit(&htim8);
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -350,24 +570,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED_Pin|LM_EN_Pin|OUT_1_Pin|OUT_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_Pin|LM_EN_Pin|CH1_Pin|CH2_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, OUT_3_Pin|OUT_4_Pin|OUT_5_Pin|OUT_6_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : LED_Pin LM_EN_Pin OUT_1_Pin OUT_2_Pin */
-  GPIO_InitStruct.Pin = LED_Pin|LM_EN_Pin|OUT_1_Pin|OUT_2_Pin;
+  /*Configure GPIO pins : LED_Pin LM_EN_Pin CH1_Pin CH2_Pin */
+  GPIO_InitStruct.Pin = LED_Pin|LM_EN_Pin|CH1_Pin|CH2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : OUT_3_Pin OUT_4_Pin OUT_5_Pin OUT_6_Pin */
-  GPIO_InitStruct.Pin = OUT_3_Pin|OUT_4_Pin|OUT_5_Pin|OUT_6_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USB_OTG_VBUS_Pin */
   GPIO_InitStruct.Pin = USB_OTG_VBUS_Pin;
@@ -381,6 +591,28 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim->Instance == TIM2)//каждую секунду
+	{
+		secFromStart++;
+        HAL_GPIO_TogglePin(GPIOB, LED_Pin);
+	}
+	if(htim->Instance == TIM3) //каждую милисекунду
+	{
+		msFromStart++;
+		if (updTimer >=5)
+		{
+			updTimer = 0;
+			CH1.updateCh();
+		}
+		else
+		{
+			updTimer++;
+		}
+	}
+
+}
 /* USER CODE END 4 */
 
 /**

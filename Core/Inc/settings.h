@@ -9,10 +9,10 @@
 #define INC_SETTINGS_H_
 
 #include "stdint.h"
+#include <string>
 
-struct Param
+struct chSpec
 {
-    //параметры платы
 	uint16_t
         signalSource,
         pwmValue,
@@ -38,7 +38,22 @@ struct Param
         flash;
 };
 
-uint8_t setParam (char* datastr, struct Param* par);
+class Param
+{
+private:
+    //параметры платы
+	chSpec chSettings[6];
+public:
+    Param();
+    void setDefaultVal();
+    uint8_t setParam(char *paramString, uint16_t stringSize);
+    uint8_t setParam(char *paramString);
+    uint8_t getParam(char *paramString, uint16_t stringSize);
+    uint8_t getParam(char *paramString);
+
+};
+
+
 
 
 #endif /* INC_SETTINGS_H_ */

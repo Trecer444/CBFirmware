@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -75,18 +77,18 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOB
 #define LM_EN_Pin GPIO_PIN_13
 #define LM_EN_GPIO_Port GPIOB
-#define OUT_1_Pin GPIO_PIN_14
-#define OUT_1_GPIO_Port GPIOB
-#define OUT_2_Pin GPIO_PIN_15
-#define OUT_2_GPIO_Port GPIOB
-#define OUT_3_Pin GPIO_PIN_6
-#define OUT_3_GPIO_Port GPIOC
-#define OUT_4_Pin GPIO_PIN_7
-#define OUT_4_GPIO_Port GPIOC
-#define OUT_5_Pin GPIO_PIN_8
-#define OUT_5_GPIO_Port GPIOC
-#define OUT_6_Pin GPIO_PIN_9
-#define OUT_6_GPIO_Port GPIOC
+#define CH1_Pin GPIO_PIN_14
+#define CH1_GPIO_Port GPIOB
+#define CH2_Pin GPIO_PIN_15
+#define CH2_GPIO_Port GPIOB
+#define CH3_PWM_Pin GPIO_PIN_6
+#define CH3_PWM_GPIO_Port GPIOC
+#define CH4_PWM_Pin GPIO_PIN_7
+#define CH4_PWM_GPIO_Port GPIOC
+#define CH5_PWM_Pin GPIO_PIN_8
+#define CH5_PWM_GPIO_Port GPIOC
+#define CH6_PWM_Pin GPIO_PIN_9
+#define CH6_PWM_GPIO_Port GPIOC
 #define USB_OTG_VBUS_Pin GPIO_PIN_8
 #define USB_OTG_VBUS_GPIO_Port GPIOA
 
