@@ -202,17 +202,17 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles CAN1 RX1 interrupt.
+  * @brief This function handles CAN1 RX0 interrupts.
   */
-void CAN1_RX1_IRQHandler(void)
+void CAN1_RX0_IRQHandler(void)
 {
-  /* USER CODE BEGIN CAN1_RX1_IRQn 0 */
+  /* USER CODE BEGIN CAN1_RX0_IRQn 0 */
 
-  /* USER CODE END CAN1_RX1_IRQn 0 */
+  /* USER CODE END CAN1_RX0_IRQn 0 */
   HAL_CAN_IRQHandler(&hcan1);
-  /* USER CODE BEGIN CAN1_RX1_IRQn 1 */
+  /* USER CODE BEGIN CAN1_RX0_IRQn 1 */
 
-  /* USER CODE END CAN1_RX1_IRQn 1 */
+  /* USER CODE END CAN1_RX0_IRQn 1 */
 }
 
 /**

@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "./App/header.h"
 #include "settings.h"
 #include "usbd_cdc_if.h"
 #include <string.h>
@@ -55,6 +56,8 @@ TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+
+CAN_HandleTypeDef hcan;
 
 /* USER CODE BEGIN PV */
 uint8_t rxData[RX_LENGHT];			//данные с ком-порта;
@@ -126,7 +129,27 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
+//=============================================CAN CONFIG
+  CAN_FilterTypeDef canFilterConfig;
+  canFilterConfig.FilterBank = 0;
+  canFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
+  canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  canFilterConfig.FilterIdHigh = CANFILTER_1;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterIdLow = 0x0000;
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_2;
+  canFilterConfig.FilterMaskIdLow = 0x0000;
+  canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+  canFilterConfig.FilterActivation = ENABLE;
+  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
 
+  canFilterConfig.FilterBank = 1;
+  canFilterConfig.FilterIdHigh = CANFILTER_3;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_4;
+  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
+
+  HAL_CAN_Start(&hcan);
+  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+  //=============================================CAN CONFIG END
   HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
   HAL_Delay(500);
   HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
@@ -282,11 +305,11 @@ static void MX_CAN1_Init(void)
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 16;
+  hcan1.Init.Prescaler = 8;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_4TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
@@ -590,7 +613,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+//================================================================TIMERS
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM2)//каждую секунду
@@ -612,6 +635,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 	}
 
+}
+//================================================================CAN MESSAGES RX
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+  CAN_RxHeaderTypeDef msgHeader;
+//  uint32_t msgId = 0;
+  uint8_t msgData[8];
+
+  HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &msgHeader, msgData);
+
+//  if (msgHeader.IDE == CAN_ID_EXT)
+//  {
+//    msgId = msgHeader.ExtId;
+//  }
+//  else
+//  {
+//    msgId = msgHeader.StdId;
+//  }
 }
 /* USER CODE END 4 */
 
