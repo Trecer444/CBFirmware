@@ -63,9 +63,9 @@ TIM_HandleTypeDef htim8;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
-CAN_HandleTypeDef hcan;
-
 /* USER CODE BEGIN PV */
+CAN_RxHeaderTypeDef rxCanHeader;
+uint8_t rxCanData[8] = {0,};
 uint8_t rxData[RX_LENGHT];			//данные с ком-порта;
 Param param;
 uint16_t 	secFromStart = 0,
@@ -158,25 +158,26 @@ int main(void)
   AppInit();
 //=============================================CAN CONFIG
 
-  CAN_FilterTypeDef canFilterConfig;
-  canFilterConfig.FilterBank = 0;
-  canFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
-  canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-  canFilterConfig.FilterIdHigh = CANFILTER_1;				//устаенавливаем фильтра на ID сообщений CAN
-  canFilterConfig.FilterIdLow = 0x0000;
-  canFilterConfig.FilterMaskIdHigh = CANFILTER_2;
-  canFilterConfig.FilterMaskIdLow = 0x0000;
-  canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-  canFilterConfig.FilterActivation = ENABLE;
-  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
+//  CAN_FilterTypeDef canFilterConfig;
+//  canFilterConfig.FilterBank = 0;
+//  canFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
+//  canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+//  canFilterConfig.FilterIdHigh = CANFILTER_1;				//устаенавливаем фильтра на ID сообщений CAN
+//  canFilterConfig.FilterIdLow = 0x0000;
+//  canFilterConfig.FilterMaskIdHigh = CANFILTER_2;
+//  canFilterConfig.FilterMaskIdLow = 0x0000;
+//  canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+//  canFilterConfig.FilterActivation = ENABLE;
+//  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
+//
+//  canFilterConfig.FilterBank = 1;
+//  canFilterConfig.FilterIdHigh = CANFILTER_3;				//устаенавливаем фильтра на ID сообщений CAN
+//  canFilterConfig.FilterMaskIdHigh = CANFILTER_4;
+//  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
 
-  canFilterConfig.FilterBank = 1;
-  canFilterConfig.FilterIdHigh = CANFILTER_3;				//устаенавливаем фильтра на ID сообщений CAN
-  canFilterConfig.FilterMaskIdHigh = CANFILTER_4;
-  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
 
-  HAL_CAN_Start(&hcan);
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO1_MSG_PENDING);
   //=============================================CAN CONFIG END
   HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
   HAL_Delay(500);
@@ -185,7 +186,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
 
-  uint8_t sdfasdas;
+
 
   __enable_irq();
   /* USER CODE END 2 */
@@ -329,20 +330,20 @@ static void MX_CAN1_Init(void)
 {
 
   /* USER CODE BEGIN CAN1_Init 0 */
-
+	CAN_FilterTypeDef sFilterConfig; //хотя бы 1 фильтр должен быть, иначе не заведется
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 8;
+  hcan1.Init.Prescaler = 4;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_4TQ;
-  hcan1.Init.TimeSeg2 = CAN_BS2_4TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_3TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoBusOff = ENABLE;
   hcan1.Init.AutoWakeUp = DISABLE;
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
@@ -352,7 +353,23 @@ static void MX_CAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN1_Init 2 */
-
+  /*
+   * параметры фильтра, настроенные на прием любого сообщ-я
+   */
+  sFilterConfig.FilterBank = 0;
+  sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+  sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  sFilterConfig.FilterIdHigh = 0x0000;
+  sFilterConfig.FilterIdLow = 0x0000;
+  sFilterConfig.FilterMaskIdHigh = 0x0000;
+  sFilterConfig.FilterMaskIdLow = 0x0000;
+  sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+  sFilterConfig.FilterActivation = ENABLE;
+  //sFilterConfig.SlaveStartFilterBank = 14;
+  if (HAL_CAN_ConfigFilter(&hcan1, &sFilterConfig) != HAL_OK)
+  {
+	  Error_Handler();
+  }
   /* USER CODE END CAN1_Init 2 */
 
 }
@@ -668,22 +685,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 }
 //================================================================CAN MESSAGES RX
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
-  CAN_RxHeaderTypeDef msgHeader;
-//  uint32_t msgId = 0;
-  uint8_t msgData[8];
+    if(HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxCanHeader, rxCanData) == HAL_OK)
+    {
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    }
+}
 
-  HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &msgHeader, msgData);
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+{
+    if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &rxCanHeader, rxCanData) == HAL_OK)
+    {
+        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    }
+}
 
-//  if (msgHeader.IDE == CAN_ID_EXT)
-//  {
-//    msgId = msgHeader.ExtId;
-//  }
-//  else
-//  {
-//    msgId = msgHeader.StdId;
-//  }
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
+{
+    uint32_t er = HAL_CAN_GetError(hcan);
+//    sprintf(trans_str,"ER CAN %lu %08lX", er, er);
+//    HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 100);
 }
 /* USER CODE END 4 */
 
