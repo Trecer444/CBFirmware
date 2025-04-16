@@ -102,3 +102,9 @@ uint8_t Param::setParam(char *paramString)
 	}
 	return 0;
 }
+
+uint8_t Param::getSourceSign(uint8_t index)
+{
+	return this->chSettings[index].signalSource;
+
+}

@@ -90,12 +90,14 @@ static void MX_TIM8_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-OutputCh CH1(GPIOB,  14, &htim8);
-OutputCh CH2(GPIOB,  15, &htim8);
-OutputCh CH3(GPIOC,  6, &htim8);
-OutputCh CH4(GPIOC,  7, &htim8);
-OutputCh CH5(GPIOC,  8, &htim8);
-OutputCh CH6(GPIOC,  9, &htim8);
+OutputCh CH0(GPIOB,  14, &htim8);
+OutputCh CH1(GPIOB,  15, &htim8);
+OutputCh CH2(GPIOC,  6, &htim8);
+OutputCh CH3(GPIOC,  7, &htim8);
+OutputCh CH4(GPIOC,  8, &htim8);
+OutputCh CH5(GPIOC,  9, &htim8);
+OutputCh* CH[6];
+
 /**
   * @brief  Vector base address configuration. It should no longer be at the start of
   *         flash memory but moved forward because the first part of flash is
@@ -125,6 +127,12 @@ int main(void)
   /* USER CODE BEGIN 1 */
   /* Configure the vector table base address. */
   VectorBase_Config();
+  CH[0] = &CH0;
+  CH[1] = &CH1;
+  CH[2] = &CH2;
+  CH[3] = &CH3;
+  CH[4] = &CH4;
+  CH[5] = &CH5;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -199,6 +207,7 @@ int main(void)
 	  {
 		  secFromStart = 30;
 	  }
+
 	  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
 	  if (bytesAvailable >= BYTES_AR_SIZE)
 	  {
@@ -357,11 +366,11 @@ static void MX_CAN1_Init(void)
    * параметры фильтра, настроенные на прием любого сообщ-я
    */
   sFilterConfig.FilterBank = 0;
-  sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+  sFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
   sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-  sFilterConfig.FilterIdHigh = 0x0000;
+  sFilterConfig.FilterIdHigh = CANFILTER_1 << 5;
   sFilterConfig.FilterIdLow = 0x0000;
-  sFilterConfig.FilterMaskIdHigh = 0x0000;
+  sFilterConfig.FilterMaskIdHigh = CANFILTER_2 << 5;
   sFilterConfig.FilterMaskIdLow = 0x0000;
   sFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
   sFilterConfig.FilterActivation = ENABLE;
@@ -687,10 +696,40 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 //================================================================CAN MESSAGES RX
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
-    if(HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxCanHeader, rxCanData) == HAL_OK)
-    {
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    }
+	if(HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxCanHeader, rxCanData) == HAL_OK)
+	{
+		if (rxCanData[7] == 0xCF)
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				if (param.getSourceSign(i) == HEATER)
+				{
+					CH[i]->buttonTriggered(0);
+				}
+			}
+		}
+		if (rxCanData[7] == 0xDF)
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				if (param.getSourceSign(i) == HEATER)
+				{
+					CH[i]->buttonTriggered(1);
+				}
+			}
+		}
+		if (rxCanData[7] == 0xEF)
+		{
+			for (int i = 0; i < 6; i++)
+			{
+				if (param.getSourceSign(i) == HEATER)
+				{
+					CH[i]->buttonTriggered(2);
+				}
+			}
+		}
+		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+	}
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)

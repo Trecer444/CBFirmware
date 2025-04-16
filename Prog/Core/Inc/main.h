@@ -93,7 +93,7 @@ void Error_Handler(void);
 #define USB_OTG_VBUS_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
-#define CANFILTER_1 			0x00
+#define CANFILTER_1 			0x2D0 //подогрев
 #define CANFILTER_2				0x00
 #define CANFILTER_3				0x00
 #define CANFILTER_4				0x00
@@ -102,6 +102,7 @@ void Error_Handler(void);
 #define CANFILTER_7				0x00
 #define CANFILTER_8				0x00
 #define CANFILTER_9				0x00
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

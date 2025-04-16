@@ -50,6 +50,7 @@ public:
     uint8_t setParam(char *paramString);
     uint8_t getParam(char *paramString, uint16_t stringSize);
     uint8_t getParam(char *paramString);
+    uint8_t getSourceSign(uint8_t index);
 
 };
 
