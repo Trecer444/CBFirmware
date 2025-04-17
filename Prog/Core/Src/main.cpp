@@ -33,6 +33,8 @@ extern "C"
 #include "usbd_cdc_if.h"
 #include <string.h>
 #include "outputch.h"
+#include "ee.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +74,20 @@ uint16_t 	secFromStart = 0,
 			msFromStart = 0,
 			updTimer = 0;
 
+typedef struct
+{
+ uint32_t val1;
+ uint32_t val2;
+ uint32_t val3;
+ uint32_t val4;
+ uint32_t val5;
+ uint32_t val6;
+ uint32_t val7;
+ uint32_t val8;
+
+} Stotrage_t;
+
+Stotrage_t ee;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -194,9 +210,23 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
 
+  EE_Init(&ee, sizeof(Stotrage_t));
 
+
+//  ee.val1 = 0x1111;
+//  ee.val2 = 0x2222;
+//  ee.val3 = 0x3333;
+//  ee.val4 = 0x4444;
+//  ee.val5 = 0x5555;
+//  ee.val6 = 0x6666;
+//  ee.val7 = 0x7777;
+//  ee.val8 = 0x8888;
+//  EE_Write();
+  EE_Read();
 
   __enable_irq();
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -746,6 +776,14 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 //    sprintf(trans_str,"ER CAN %lu %08lX", er, er);
 //    HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 100);
 }
+
+
+void readDataFromEEPROM()
+{
+
+}
+
+
 /* USER CODE END 4 */
 
 /**
