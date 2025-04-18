@@ -148,12 +148,26 @@ void OutputCh::updateCh()
 
 void OutputCh::turnOffCh()
 {
+	if (this->gpioPinMosfet == 6 || this->gpioPinMosfet == 7 || this->gpioPinMosfet == 8 || this->gpioPinMosfet == 9)
+	{
+		  TIM8->CCR1 = 0;
+		  TIM8->CCR2 = 0;
+		  TIM8->CCR3 = 0;
+		  TIM8->CCR4 = 0;
+	}
 	HAL_GPIO_WritePin(this->gpioPortMosfet, this->gpioPinMosfet, GPIO_PIN_RESET);
 	this->outputState = 0;
 }
 
 void OutputCh::turnOnCh()
 {
+	if (this->gpioPinMosfet == 6 || this->gpioPinMosfet == 7 || this->gpioPinMosfet == 8 || this->gpioPinMosfet == 9)
+	{
+		  TIM8->CCR1 = 600;
+		  TIM8->CCR2 = 600;
+		  TIM8->CCR3 = 600;
+		  TIM8->CCR4 = 600;
+	}
 	HAL_GPIO_WritePin(this->gpioPortMosfet, this->gpioPinMosfet, GPIO_PIN_SET);
 	this->outputState = 1;
 }

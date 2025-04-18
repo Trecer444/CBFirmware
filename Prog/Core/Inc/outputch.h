@@ -40,11 +40,12 @@ public:
 	void buttonTriggered(uint8_t status);				//метод вызывает при приеме КАНовской команды, которая соответствует изсточнику данного канала+
 	void updataVoltage(uint16_t voltage);				//в методе передается в качестве аргумента текущее считанное значение напряжения
 //	void
+	void turnOffCh();
+	void turnOnCh();
 
 
 private:
-	void turnOffCh();
-	void turnOnCh();
+
 	void turnOnPWMCh(uint32_t pwmValInner);
 
 	GPIO_TypeDef port;

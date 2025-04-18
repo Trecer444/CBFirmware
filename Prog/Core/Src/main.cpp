@@ -74,20 +74,8 @@ uint16_t 	secFromStart = 0,
 			msFromStart = 0,
 			updTimer = 0;
 
-typedef struct
-{
- uint32_t val1;
- uint32_t val2;
- uint32_t val3;
- uint32_t val4;
- uint32_t val5;
- uint32_t val6;
- uint32_t val7;
- uint32_t val8;
 
-} Stotrage_t;
-
-Stotrage_t ee;
+chSettingsEEPROM chSettingsPacked;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -106,12 +94,12 @@ static void MX_TIM8_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-OutputCh CH0(GPIOB,  14, &htim8);
-OutputCh CH1(GPIOB,  15, &htim8);
-OutputCh CH2(GPIOC,  6, &htim8);
-OutputCh CH3(GPIOC,  7, &htim8);
-OutputCh CH4(GPIOC,  8, &htim8);
-OutputCh CH5(GPIOC,  9, &htim8);
+//OutputCh CH0(GPIOB,  14, &htim8);
+//OutputCh CH1(GPIOB,  15, &htim8);
+//OutputCh CH2(GPIOC,  6, &htim8);
+//OutputCh CH3(GPIOC,  7, &htim8);
+//OutputCh CH4(GPIOC,  8, &htim8);
+//OutputCh CH5(GPIOC,  9, &htim8);
 OutputCh* CH[6];
 
 /**
@@ -143,6 +131,13 @@ int main(void)
   /* USER CODE BEGIN 1 */
   /* Configure the vector table base address. */
   VectorBase_Config();
+
+  OutputCh CH0(GPIOB,  14, &htim8);
+  OutputCh CH1(GPIOB,  15, &htim8);
+  OutputCh CH2(GPIOC,  6, &htim8);
+  OutputCh CH3(GPIOC,  7, &htim8);
+  OutputCh CH4(GPIOC,  8, &htim8);
+  OutputCh CH5(GPIOC,  9, &htim8);
   CH[0] = &CH0;
   CH[1] = &CH1;
   CH[2] = &CH2;
@@ -210,8 +205,16 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
 
-  EE_Init(&ee, sizeof(Stotrage_t));
+  EE_Init(&chSettingsPacked, sizeof(chSettingsEEPROM));
 
+  TIM8->CCR1 = 0;
+  TIM8->CCR2 = 0;
+  TIM8->CCR3 = 0;
+  TIM8->CCR4 = 0;
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 
 //  ee.val1 = 0x1111;
 //  ee.val2 = 0x2222;
@@ -222,7 +225,7 @@ int main(void)
 //  ee.val7 = 0x7777;
 //  ee.val8 = 0x8888;
 //  EE_Write();
-  EE_Read();
+//  EE_Read();
 
   __enable_irq();
 
@@ -233,10 +236,15 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if (secFromStart == 30)
-	  {
-		  secFromStart = 30;
-	  }
+    	CH[3]->turnOnCh();
+    	CH[4]->turnOnCh();
+    	CH[5]->turnOnCh();
+    	HAL_Delay(300);
+    	CH[5]->turnOffCh();
+    	CH[4]->turnOffCh();
+    	CH[3]->turnOffCh();
+    	HAL_Delay(300);
+
 
 	  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
 	  if (bytesAvailable >= BYTES_AR_SIZE)
@@ -252,7 +260,6 @@ int main(void)
 		  }
 	      	CDC_FlushRxBuffer_FS();
 	      	HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
-
 	  }
 
     /* USER CODE END WHILE */
@@ -714,7 +721,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		if (updTimer >=5)
 		{
 			updTimer = 0;
-			CH1.updateCh();
+//			CH1.updateCh();
 		}
 		else
 		{
