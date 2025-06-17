@@ -33,7 +33,8 @@ extern "C"
 #include "usbd_cdc_if.h"
 #include <string.h>
 #include "outputch.h"
-#include "ee.h"
+#include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_can.h"
 
 /* USER CODE END Includes */
 
@@ -75,7 +76,6 @@ uint16_t 	secFromStart = 0,
 			updTimer = 0;
 
 
-chSettingsEEPROM chSettingsPacked;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -205,7 +205,6 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
 
-  EE_Init(&chSettingsPacked, sizeof(chSettingsEEPROM));
 
   TIM8->CCR1 = 0;
   TIM8->CCR2 = 0;
@@ -216,16 +215,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
 
-//  ee.val1 = 0x1111;
-//  ee.val2 = 0x2222;
-//  ee.val3 = 0x3333;
-//  ee.val4 = 0x4444;
-//  ee.val5 = 0x5555;
-//  ee.val6 = 0x6666;
-//  ee.val7 = 0x7777;
-//  ee.val8 = 0x8888;
-//  EE_Write();
-//  EE_Read();
+
 
   __enable_irq();
 
@@ -779,7 +769,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {
-    uint32_t er = HAL_CAN_GetError(hcan);
+//    uint32_t er = HAL_CAN_GetError(hcan);
 //    sprintf(trans_str,"ER CAN %lu %08lX", er, er);
 //    HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 100);
 }

@@ -7,6 +7,11 @@
 
 #include "settings.h"
 
+const uint8_t Param::bitLengths[20] = {
+    4, 7, 3, 7, 7, 7,
+    14, 12, 11, 11, 9, 11,
+    1, 1, 1, 1, 1, 1, 1, 1
+};
 
 void Param::setDefaultVal()
 {
@@ -38,6 +43,7 @@ void Param::setDefaultVal()
 
 Param::Param()
 {
+
 	this->setDefaultVal();
 }
 
@@ -107,4 +113,331 @@ uint8_t Param::getSourceSign(uint8_t index)
 {
 	return this->chSettings[index].signalSource;
 
+}
+
+
+void Param::packToAlignedBuffer(uint16_t* buffer)
+{
+    uint16_t bitIndex = 0;
+    uint16_t wordIndex;
+    uint8_t bitOffset;
+    uint8_t bitsInThisWord;
+    uint16_t mask;
+
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        for (uint8_t j = 0; j < 20; ++j)
+        {
+            uint32_t value = 0;
+
+            switch (j)
+            {
+                case 0:  value = chSettings[i].signalSource;       break;
+                case 1:  value = chSettings[i].pwmValue;           break;
+                case 2:  value = chSettings[i].flashType;          break;
+                case 3:  value = chSettings[i].flashCount;         break;
+                case 4:  value = chSettings[i].heater1;            break;
+                case 5:  value = chSettings[i].heater2;            break;
+                case 6:  value = chSettings[i].delayTimerValue;    break;
+                case 7:  value = chSettings[i].shutdownTimerValue; break;
+                case 8:  value = chSettings[i].vCutOffValue;       break;
+                case 9:  value = chSettings[i].vAutoEnValue;       break;
+                case 10: value = chSettings[i].flashFreq;          break;
+                case 11: value = chSettings[i].currCutOffValue;    break;
+                case 12: value = chSettings[i].engineOn;           break;
+                case 13: value = chSettings[i].shutdownTimer;      break;
+                case 14: value = chSettings[i].vCutOff;            break;
+                case 15: value = chSettings[i].vAutoEn;            break;
+                case 16: value = chSettings[i].pwm;                break;
+                case 17: value = chSettings[i].currCutOff;         break;
+                case 18: value = chSettings[i].delayTimer;         break;
+                case 19: value = chSettings[i].flash;              break;
+            }
+
+            uint8_t numBits = Param::bitLengths[j];
+
+            while (numBits > 0)
+            {
+                wordIndex = bitIndex / 16;
+                bitOffset = bitIndex % 16;
+                bitsInThisWord = (16 - bitOffset < numBits) ? (16 - bitOffset) : numBits;
+
+                mask = (1U << bitsInThisWord) - 1;
+
+                buffer[wordIndex] &= ~(mask << bitOffset);               // очистка
+                buffer[wordIndex] |= ((value & mask) << bitOffset);     // запись
+
+                value >>= bitsInThisWord;
+                bitIndex += bitsInThisWord;
+                numBits -= bitsInThisWord;
+            }
+        }
+    }
+}
+
+
+void Param::unpackFromAlignedBuffer(const uint16_t* buffer)
+{
+    uint16_t bitIndex = 0;
+    uint16_t wordIndex;
+    uint8_t bitOffset;
+    uint8_t bitsInThisWord;
+    uint16_t mask;
+
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        for (uint8_t j = 0; j < 20; ++j)
+        {
+            uint32_t value = 0;
+            uint8_t bitsRead = 0;
+            uint8_t numBits = Param::bitLengths[j];
+
+            while (bitsRead < numBits)
+            {
+                wordIndex = bitIndex / 16;
+                bitOffset = bitIndex % 16;
+                bitsInThisWord = (16 - bitOffset < numBits - bitsRead) ? (16 - bitOffset) : (numBits - bitsRead);
+
+                mask = (1U << bitsInThisWord) - 1;
+                uint16_t bits = (buffer[wordIndex] >> bitOffset) & mask;
+
+                value |= ((uint32_t)bits << bitsRead);
+
+                bitIndex += bitsInThisWord;
+                bitsRead += bitsInThisWord;
+            }
+
+            switch (j)
+            {
+                case 0:  chSettings[i].signalSource       = (uint16_t)value; break;
+                case 1:  chSettings[i].pwmValue           = (uint16_t)value; break;
+                case 2:  chSettings[i].flashType          = (uint16_t)value; break;
+                case 3:  chSettings[i].flashCount         = (uint16_t)value; break;
+                case 4:  chSettings[i].heater1            = (uint16_t)value; break;
+                case 5:  chSettings[i].heater2            = (uint16_t)value; break;
+                case 6:  chSettings[i].delayTimerValue    = (uint16_t)value; break;
+                case 7:  chSettings[i].shutdownTimerValue = (uint16_t)value; break;
+                case 8:  chSettings[i].vCutOffValue       = (uint16_t)value; break;
+                case 9:  chSettings[i].vAutoEnValue       = (uint16_t)value; break;
+                case 10: chSettings[i].flashFreq          = (uint16_t)value; break;
+                case 11: chSettings[i].currCutOffValue    = (uint16_t)value; break;
+                case 12: chSettings[i].engineOn           = (uint8_t)value;  break;
+                case 13: chSettings[i].shutdownTimer      = (uint8_t)value;  break;
+                case 14: chSettings[i].vCutOff            = (uint8_t)value;  break;
+                case 15: chSettings[i].vAutoEn            = (uint8_t)value;  break;
+                case 16: chSettings[i].pwm                = (uint8_t)value;  break;
+                case 17: chSettings[i].currCutOff         = (uint8_t)value;  break;
+                case 18: chSettings[i].delayTimer         = (uint8_t)value;  break;
+                case 19: chSettings[i].flash              = (uint8_t)value;  break;
+            }
+        }
+    }
+}
+
+
+//
+// Проверяет, вся ли область flash свободна (все half-word == 0xFFFF)
+//
+uint8_t Param::isFlashEmpty(uint32_t address, uint16_t halfwordCount)
+{
+    for (uint16_t i = 0; i < halfwordCount; ++i)
+    {
+        if (*((uint16_t*)(address + i * 2)) != 0xFFFF)
+            return 0; // хотя бы одно слово занято
+    }
+    return 1; // всё свободно
+}
+
+//
+// Вычисляет CRC16 по массиву half-word'ов (uint16_t)
+// Используется для проверки целостности записей в Flash
+//
+uint16_t Param::calculateCRC16(const uint16_t* data, uint16_t length)
+{
+    uint16_t crc = 0xFFFF;
+    for (uint16_t i = 0; i < length; ++i)
+    {
+        crc ^= data[i];
+        for (uint8_t j = 0; j < 16; ++j)
+        {
+            if (crc & 0x0001)
+                crc = (crc >> 1) ^ 0xA001;
+            else
+                crc >>= 1;
+        }
+    }
+    return crc;
+}
+
+//
+// Проверяет, корректны ли все значения в распакованной записи
+// Используется в readFromFlash для отбраковки повреждённых записей
+//
+uint8_t Param::isValidRecord(const uint16_t* buffer)
+{
+    Param temp;
+    temp.unpackFromAlignedBuffer(buffer);
+
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        if (temp.chSettings[i].signalSource > 15) return 0;
+        if (temp.chSettings[i].pwmValue > 127) return 0;
+        if (temp.chSettings[i].flashType > 4) return 0;
+        if (temp.chSettings[i].flashCount > 127) return 0;
+        if (temp.chSettings[i].heater1 > 127) return 0;
+        if (temp.chSettings[i].heater2 > 127) return 0;
+        if (temp.chSettings[i].delayTimerValue > 16383) return 0;
+        if (temp.chSettings[i].shutdownTimerValue > 4095) return 0;
+        if (temp.chSettings[i].vCutOffValue > 2047) return 0;
+        if (temp.chSettings[i].vAutoEnValue > 2047) return 0;
+        if (temp.chSettings[i].flashFreq > 511) return 0;
+        if (temp.chSettings[i].currCutOffValue > 2047) return 0;
+
+        if (temp.chSettings[i].engineOn > 1) return 0;
+        if (temp.chSettings[i].shutdownTimer > 1) return 0;
+        if (temp.chSettings[i].vCutOff > 1) return 0;
+        if (temp.chSettings[i].vAutoEn > 1) return 0;
+        if (temp.chSettings[i].pwm > 1) return 0;
+        if (temp.chSettings[i].currCutOff > 1) return 0;
+        if (temp.chSettings[i].delayTimer > 1) return 0;
+        if (temp.chSettings[i].flash > 1) return 0;
+    }
+
+    return 1; // все поля валидны
+}
+
+//
+// Сохраняет текущие параметры chSettings во Flash
+// Запись производится в первый свободный блок в секторах 10 или 11
+//
+uint8_t Param::saveToFlash()
+{
+    uint16_t buffer[RECORD_SIZE_HALFWORDS] = {0};
+
+    // 🧩 Упаковываем данные структуры в 46 half-word
+    packToAlignedBuffer(buffer);
+
+    // 🔐 Вычисляем CRC16 по данным и добавляем как 47-е слово
+    buffer[RECORD_DATA_HALFWORDS] = calculateCRC16(buffer, RECORD_DATA_HALFWORDS);
+
+    // 🔓 Разблокировка Flash для записи
+    HAL_FLASH_Unlock();
+
+    uint32_t currentAddress = FLASH_PAGE1_ADDR;
+    uint32_t endAddress = FLASH_PAGE2_ADDR + FLASH_PAGE_SIZE;
+    uint32_t recordSizeBytes = RECORD_SIZE_HALFWORDS * 2;
+    uint8_t written = 0;
+
+    //  Ищем первую свободную позицию в Flash
+    for (; currentAddress + recordSizeBytes <= endAddress; currentAddress += recordSizeBytes)
+    {
+        if (isFlashEmpty(currentAddress, RECORD_SIZE_HALFWORDS))
+        {
+            // 💾 Запись данных поблочно по 16 бит
+            for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
+            {
+                if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, currentAddress + i * 2, buffer[i]) != HAL_OK)
+                {
+                    HAL_FLASH_Lock();
+                    return 0; // ошибка записи
+                }
+            }
+            written = 1;
+            break;
+        }
+    }
+
+    //  Если всё занято — очищаем оба сектора и пишем с начала
+    if (!written)
+    {
+        FLASH_EraseInitTypeDef eraseInit;
+        uint32_t pageError = 0;
+
+        eraseInit.TypeErase = FLASH_TYPEERASE_SECTORS;
+        eraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+        eraseInit.Sector = FLASH_SECTOR_10;
+        eraseInit.NbSectors = 2;
+
+        if (HAL_FLASHEx_Erase(&eraseInit, &pageError) != HAL_OK)
+        {
+            HAL_FLASH_Lock();
+            return 0;
+        }
+
+        currentAddress = FLASH_PAGE1_ADDR;
+        for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
+        {
+            if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, currentAddress + i * 2, buffer[i]) != HAL_OK)
+            {
+                HAL_FLASH_Lock();
+                return 0;
+            }
+        }
+    }
+
+    // 🔐 Блокируем Flash после записи
+    HAL_FLASH_Lock();
+    return 1;
+}
+
+//
+// Загружает последнюю валидную (неповреждённую) запись из Flash
+// Ищет последнюю запись с валидной CRC и данными
+//
+uint8_t Param::readFromFlash()
+{
+    uint32_t address = FLASH_PAGE1_ADDR;
+    uint32_t endAddress = FLASH_PAGE2_ADDR + FLASH_PAGE_SIZE;
+    uint32_t recordSizeBytes = RECORD_SIZE_HALFWORDS * 2;
+
+    uint32_t lastValidAddress = 0xFFFFFFFF;
+    uint16_t buffer[RECORD_SIZE_HALFWORDS];
+
+    //  Поиск последней корректной записи с верной CRC и структурой
+    for (; address + recordSizeBytes <= endAddress; address += recordSizeBytes)
+    {
+        if (isFlashEmpty(address, RECORD_SIZE_HALFWORDS))
+        {
+            break; // дошли до свободного места
+        }
+
+        // 🧾 Чтение всей записи (включая CRC)
+        for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
+        {
+            buffer[i] = *((uint16_t*)(address + i * 2));
+        }
+
+        // ✅ Проверка CRC
+        uint16_t storedCRC = buffer[RECORD_DATA_HALFWORDS];
+        uint16_t calcCRC = calculateCRC16(buffer, RECORD_DATA_HALFWORDS);
+        if (storedCRC != calcCRC)
+        {
+            break; // повреждённая запись
+        }
+
+        // Дополнительная валидация значений
+        if (isValidRecord(buffer))
+        {
+            lastValidAddress = address;
+        }
+        else
+        {
+            break; // структура повреждена
+        }
+    }
+
+    if (lastValidAddress == 0xFFFFFFFF)
+    {
+        return 0; // ничего не найдено
+    }
+
+    //  Повторно читаем последнюю валидную запись
+    for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
+    {
+        buffer[i] = *((uint16_t*)(lastValidAddress + i * 2));
+    }
+
+    //  Распаковка в структуру chSettings
+    unpackFromAlignedBuffer(buffer);
+    return 1;
 }

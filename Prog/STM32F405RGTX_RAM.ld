@@ -45,7 +45,7 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  CCMRAM    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 64K
+  CCMRAM    (rw)    : ORIGIN = 0x10000000,   LENGTH = 64K /*было XRW, если будут проблемы исправить назад*/
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
 }
