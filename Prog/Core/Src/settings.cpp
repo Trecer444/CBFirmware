@@ -8,7 +8,7 @@
 #include "settings.h"
 
 const uint8_t Param::bitLengths[20] = {
-    4, 7, 3, 7, 7, 7,
+    4, 7, 2, 7, 7, 7,
     14, 12, 11, 11, 9, 11,
     1, 1, 1, 1, 1, 1, 1, 1
 };
@@ -158,16 +158,16 @@ void Param::packToAlignedBuffer(uint16_t* buffer)
 
             while (numBits > 0)
             {
-                wordIndex = bitIndex / 16;
-                bitOffset = bitIndex % 16;
-                bitsInThisWord = (16 - bitOffset < numBits) ? (16 - bitOffset) : numBits;
+                wordIndex = bitIndex / 16; //в какой элемент массива пишем
+                bitOffset = bitIndex % 16; //битовый сдвиг внутри элемента массива
+                bitsInThisWord = (16 - bitOffset < numBits) ? (16 - bitOffset) : numBits; //сколько бит сможем записать в это слово
 
-                mask = (1U << bitsInThisWord) - 1;
+                mask = (1U << bitsInThisWord) - 1; // Например, bitsInThisWord = 5 → mask = 0b00011111
 
                 buffer[wordIndex] &= ~(mask << bitOffset);               // очистка
                 buffer[wordIndex] |= ((value & mask) << bitOffset);     // запись
 
-                value >>= bitsInThisWord;
+                value >>= bitsInThisWord;	//сдвигаем на уже записанное кол-во бит (если в value меньше 16 бит, то обнулится)
                 bitIndex += bitsInThisWord;
                 numBits -= bitsInThisWord;
             }
@@ -186,8 +186,11 @@ void Param::unpackFromAlignedBuffer(const uint16_t* buffer)
 
     for (uint8_t i = 0; i < 6; ++i)
     {
+
         for (uint8_t j = 0; j < 20; ++j)
         {
+
+
             uint32_t value = 0;
             uint8_t bitsRead = 0;
             uint8_t numBits = Param::bitLengths[j];
@@ -314,32 +317,34 @@ uint8_t Param::saveToFlash()
 {
     uint16_t buffer[RECORD_SIZE_HALFWORDS] = {0};
 
-    // 🧩 Упаковываем данные структуры в 46 half-word
-    packToAlignedBuffer(buffer);
+    // [0] Версия
+    buffer[0] = RECORD_VERSION;
 
-    // 🔐 Вычисляем CRC16 по данным и добавляем как 47-е слово
+    // [1..N] Параметры
+    packToAlignedBuffer(&buffer[1]);
+
+    // [N+1] CRC
     buffer[RECORD_DATA_HALFWORDS] = calculateCRC16(buffer, RECORD_DATA_HALFWORDS);
 
-    // 🔓 Разблокировка Flash для записи
     HAL_FLASH_Unlock();
 
     uint32_t currentAddress = FLASH_PAGE1_ADDR;
     uint32_t endAddress = FLASH_PAGE2_ADDR + FLASH_PAGE_SIZE;
-    uint32_t recordSizeBytes = RECORD_SIZE_HALFWORDS * 2;
+
     uint8_t written = 0;
 
-    //  Ищем первую свободную позицию в Flash
-    for (; currentAddress + recordSizeBytes <= endAddress; currentAddress += recordSizeBytes)
+    // 🔍 Поиск первого свободного места с шагом 1 halfword
+    for (; currentAddress + RECORD_SIZE_HALFWORDS * 2 < endAddress; currentAddress += 2)
     {
         if (isFlashEmpty(currentAddress, RECORD_SIZE_HALFWORDS))
         {
-            // 💾 Запись данных поблочно по 16 бит
+            // 💾 Запись
             for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
             {
                 if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, currentAddress + i * 2, buffer[i]) != HAL_OK)
                 {
                     HAL_FLASH_Lock();
-                    return 0; // ошибка записи
+                    return 0;
                 }
             }
             written = 1;
@@ -347,7 +352,7 @@ uint8_t Param::saveToFlash()
         }
     }
 
-    //  Если всё занято — очищаем оба сектора и пишем с начала
+    // 🔁 Если не записали — стираем оба сектора и пишем в начало
     if (!written)
     {
         FLASH_EraseInitTypeDef eraseInit;
@@ -375,7 +380,6 @@ uint8_t Param::saveToFlash()
         }
     }
 
-    // 🔐 Блокируем Flash после записи
     HAL_FLASH_Lock();
     return 1;
 }
@@ -386,25 +390,31 @@ uint8_t Param::saveToFlash()
 //
 uint8_t Param::readFromFlash()
 {
-    uint32_t address = FLASH_PAGE1_ADDR;
+    uint32_t currentAddress = FLASH_PAGE1_ADDR;
     uint32_t endAddress = FLASH_PAGE2_ADDR + FLASH_PAGE_SIZE;
-    uint32_t recordSizeBytes = RECORD_SIZE_HALFWORDS * 2;
 
     uint32_t lastValidAddress = 0xFFFFFFFF;
     uint16_t buffer[RECORD_SIZE_HALFWORDS];
 
-    //  Поиск последней корректной записи с верной CRC и структурой
-    for (; address + recordSizeBytes <= endAddress; address += recordSizeBytes)
+    // 🔍 Сканируем всю область с шагом 1 halfword
+    for (; currentAddress + RECORD_SIZE_HALFWORDS * 2 < endAddress; currentAddress += 2)
     {
-        if (isFlashEmpty(address, RECORD_SIZE_HALFWORDS))
+        // ⛔ Проверка на пустоту
+        if (isFlashEmpty(currentAddress, RECORD_SIZE_HALFWORDS))
         {
-            break; // дошли до свободного места
+            break; // дошли до свободной области
         }
 
-        // 🧾 Чтение всей записи (включая CRC)
+        // 📥 Читаем запись
         for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
         {
-            buffer[i] = *((uint16_t*)(address + i * 2));
+            buffer[i] = *((const volatile uint16_t*)(currentAddress + i * 2));
+        }
+
+        // ⚠️ Проверка версии
+        if (buffer[0] != RECORD_VERSION)
+        {
+            continue; // пропускаем несовместимый формат
         }
 
         // ✅ Проверка CRC
@@ -412,18 +422,17 @@ uint8_t Param::readFromFlash()
         uint16_t calcCRC = calculateCRC16(buffer, RECORD_DATA_HALFWORDS);
         if (storedCRC != calcCRC)
         {
-            break; // повреждённая запись
+            continue;
         }
 
-        // Дополнительная валидация значений
-        if (isValidRecord(buffer))
+        // ✅ Проверка содержимого
+        if (!isValidRecord(&buffer[1]))
         {
-            lastValidAddress = address;
+            continue;
         }
-        else
-        {
-            break; // структура повреждена
-        }
+
+        // ✅ Последняя валидная запись
+        lastValidAddress = currentAddress;
     }
 
     if (lastValidAddress == 0xFFFFFFFF)
@@ -431,13 +440,49 @@ uint8_t Param::readFromFlash()
         return 0; // ничего не найдено
     }
 
-    //  Повторно читаем последнюю валидную запись
+    // 📥 Читаем выбранную запись
     for (uint16_t i = 0; i < RECORD_SIZE_HALFWORDS; ++i)
     {
-        buffer[i] = *((uint16_t*)(lastValidAddress + i * 2));
+        buffer[i] = *((const volatile uint16_t*)(lastValidAddress + i * 2));
     }
 
-    //  Распаковка в структуру chSettings
-    unpackFromAlignedBuffer(buffer);
+    // 🎯 Распаковка
+    unpackFromAlignedBuffer(&buffer[1]); // пропускаем версию
     return 1;
+}
+
+void Param::composeAllParamsString(char *outString)
+{
+	uint16_t pos = 0;
+
+	for (uint8_t ch = 0; ch < 6; ch++) // Если каналов больше — поменяй 6
+	{
+		pos += sprintf(&outString[pos], "$%d", ch);
+
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].signalSource);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].pwmValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].flashType);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].flashCount);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].heater1);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].heater2);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].delayTimerValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].shutdownTimerValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].vCutOffValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].vAutoEnValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].flashFreq);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].currCutOffValue);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].engineOn);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].shutdownTimer);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].vCutOff);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].vAutoEn);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].pwm);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].currCutOff);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].delayTimer);
+		pos += sprintf(&outString[pos], " %d", this->chSettings[ch].flash);
+
+		pos += sprintf(&outString[pos], ";");
+	}
+
+	outString[pos++] = '*';
+	outString[pos] = '\0';
 }

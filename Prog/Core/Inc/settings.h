@@ -13,11 +13,12 @@
 #include "stm32f4xx_hal.h"
 
 // Расположение и размер EEPROM-эмуляции во Flash
+#define RECORD_VERSION           0x0001  // Текущая версия структуры записи (ВАЖНО!)
 #define FLASH_PAGE1_ADDR         0x080C0000  // Сектор 10
 #define FLASH_PAGE2_ADDR         0x080E0000  // Сектор 11
 #define FLASH_PAGE_SIZE          0x20000     // 128 KB
-#define RECORD_DATA_HALFWORDS    46          // 92 байта
-#define RECORD_CRC_HALFWORDS     1           // 2 байта CRC
+#define RECORD_DATA_HALFWORDS    47      // Включая версию и параметры (пример: 1 + 46)
+#define RECORD_CRC_HALFWORDS     1
 #define RECORD_SIZE_HALFWORDS    (RECORD_DATA_HALFWORDS + RECORD_CRC_HALFWORDS)
 
 uint8_t isFlashEmpty(uint32_t address, uint16_t size);
@@ -62,6 +63,7 @@ private:
     uint16_t calculateCRC16(const uint16_t* data, uint16_t length);
     void packToAlignedBuffer(uint16_t* buffer);
     void unpackFromAlignedBuffer(const uint16_t* buffer);
+
 public:
     Param();
     void setDefaultVal();
@@ -72,6 +74,7 @@ public:
     uint8_t getSourceSign(uint8_t index);
     uint8_t saveToFlash();
     uint8_t readFromFlash();
+    void composeAllParamsString(char *outString);
 
 };
 

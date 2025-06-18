@@ -46,7 +46,7 @@ extern "C"
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define RX_LENGHT 			512 				//все равно надо вручную прописать в usbd_cdc_if.h
-#define BYTES_AR_SIZE 		338					//размер передаваемой строки в байтах
+//#define BYTES_AR_SIZE 		338					//размер передаваемой строки в байтах
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -70,6 +70,7 @@ UART_HandleTypeDef huart2;
 CAN_RxHeaderTypeDef rxCanHeader;
 uint8_t rxCanData[8] = {0,};
 uint8_t rxData[RX_LENGHT];			//данные с ком-порта;
+uint16_t rxIndex = 0;				//указатель на элемент массива rxData для побайтового вычитывания из буфера ком-порта
 Param param;
 uint16_t 	secFromStart = 0,
 			msFromStart = 0,
@@ -89,7 +90,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
-
+void processUabCommand();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -218,7 +219,8 @@ int main(void)
 
 
   __enable_irq();
-
+//  param.saveToFlash();
+  param.readFromFlash();
 
   /* USER CODE END 2 */
 
@@ -236,21 +238,7 @@ int main(void)
     	HAL_Delay(300);
 
 
-	  uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
-	  if (bytesAvailable >= BYTES_AR_SIZE)
-	  {
-		  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
-		  uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
-		  if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
-		  {
-			  uint8_t recived[] = "RECIVED\n";
-			  while (CDC_Transmit_FS(recived, 8) != USBD_OK);
-			  param.setParam((char*)rxData);
-
-		  }
-	      	CDC_FlushRxBuffer_FS();
-	      	HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
-	  }
+    	processUabCommand();
 
     /* USER CODE END WHILE */
 
@@ -697,7 +685,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-//================================================================TIMERS
+//================================================================TIMERS================================================================
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if(htim->Instance == TIM2)//каждую секунду
@@ -720,7 +708,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 
 }
-//================================================================CAN MESSAGES RX
+//================================================================CAN MESSAGES RX================================================================
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
 	if(HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxCanHeader, rxCanData) == HAL_OK)
@@ -774,12 +762,51 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 //    HAL_UART_Transmit(&huart1, (uint8_t*)trans_str, strlen(trans_str), 100);
 }
 
-
-void readDataFromEEPROM()
+//================================================================USB================================================================
+void processUabCommand()
 {
+	uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
+	if (bytesAvailable > 0)
+	{
+		while (bytesAvailable--)
+		{
+			uint8_t byte;
+			if (CDC_ReadRxBuffer_FS(&byte, 1) != USB_CDC_RX_BUFFER_OK)
+				break;
+			if (rxIndex < RX_LENGHT - 1)
+			{
+				rxData[rxIndex++] = byte;
 
+				// Конец команды по символу '\n' тут обрабатываем команду
+				if (byte == '\n')
+				{
+					rxData[rxIndex] = '\0'; // Null-terminate
+//					handleUsbCommand((char*)rxData);
+					rxIndex = 0; // Сброс для следующей команды
+					for (int i = 0; i < RX_LENGHT; i++)
+						rxData[i] = 0;
+				}
+			}
+			else
+			{
+				// Ошибка: сообщение слишком длинное
+				rxIndex = 0;
+			}
+		}
+//				HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
+//				uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
+//				if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
+//				{
+//					uint8_t recived[] = "RECIVED\n";
+//					while (CDC_Transmit_FS(recived, 8) != USBD_OK);
+//					param.setParam((char*)rxData);
+//					param.saveToFlash();
+//
+//				}
+//				CDC_FlushRxBuffer_FS();
+//				HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+	}
 }
-
 
 /* USER CODE END 4 */
 
