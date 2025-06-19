@@ -90,7 +90,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
-void processUabCommand();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -781,7 +781,7 @@ void processUabCommand()
 				if (byte == '\n')
 				{
 					rxData[rxIndex] = '\0'; // Null-terminate
-//					handleUsbCommand((char*)rxData);
+					handleUsbCommand((char*)rxData);
 					rxIndex = 0; // Сброс для следующей команды
 					for (int i = 0; i < RX_LENGHT; i++)
 						rxData[i] = 0;
@@ -805,6 +805,26 @@ void processUabCommand()
 //				}
 //				CDC_FlushRxBuffer_FS();
 //				HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+	}
+}
+
+void handleUsbCommand(char* cmd)
+{
+	if (strncmp(cmd, "#GET-ParamList", 14) == 0)
+	{
+		// Запрос строки параметров
+		static char paramString[512];
+		param.composeAllParamsString(paramString);
+		while (CDC_Transmit_FS((uint8_t*)paramString, strlen(paramString)) != USBD_OK);
+	}
+	else if (strncmp(cmd, "$", 1) == 0)
+	{
+		// Попытка интерпретации как строки параметров
+		param.setParam(cmd);
+		param.saveToFlash();
+
+		const char ok[] = "OK\n";
+		while (CDC_Transmit_FS((uint8_t*)ok, sizeof(ok) - 1) != USBD_OK);
 	}
 }
 

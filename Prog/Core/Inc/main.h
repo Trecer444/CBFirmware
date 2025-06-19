@@ -56,7 +56,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 void readDataFromEEPROM();
-
+void handleUsbCommand(char* cmd);
+void processUabCommand();
 
 /* USER CODE END EFP */
 

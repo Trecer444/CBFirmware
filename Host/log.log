@@ -1,199 +1,205 @@
- [2025-04-15 00:56:01.315 Info] Starting firmware update
- [2025-04-15 00:56:01.315 Info] Specified firmware file: D:\Documents\git\CBFirmware\Prog\Debug\f405rgt6.srec
- [2025-04-15 00:56:01.315 Info] Using LibOpenBLT version 1.03.12
- [2025-04-15 00:56:01.315 Info] Detected session protocol: XCP version 1.0
- [2025-04-15 00:56:01.315 Info] Using session protocol settings:
- [2025-04-15 00:56:01.316 Info]   -> Timeout T1: 1000 ms
- [2025-04-15 00:56:01.316 Info]   -> Timeout T3: 2000 ms
- [2025-04-15 00:56:01.316 Info]   -> Timeout T4: 10000 ms
- [2025-04-15 00:56:01.316 Info]   -> Timeout T5: 1000 ms
- [2025-04-15 00:56:01.316 Info]   -> Timeout T6: 50 ms
- [2025-04-15 00:56:01.316 Info]   -> Timeout T7: 2000 ms
- [2025-04-15 00:56:01.316 Info]   -> Seed/Key file: None
- [2025-04-15 00:56:01.316 Info]   -> Connection mode: 0
- [2025-04-15 00:56:01.316 Info] Detected transport layer: XCP on USB
- [2025-04-15 00:56:01.316 Info] Using transport layer settings:
- [2025-04-15 00:56:01.316 Info]   -> No additional settings required
- [2025-04-15 00:56:01.316 Info] Initializing firmware update engine
- [2025-04-15 00:56:01.317 Info] Loading firmware data from file
- [2025-04-15 00:56:01.334 Info]   -> Number of segments: 1
- [2025-04-15 00:56:01.334 Info]   -> Base memory address: 0800C000h
- [2025-04-15 00:56:01.334 Info]   -> Total data size: 44096
- [2025-04-15 00:56:01.334 Info] Connecting to the target
- [2025-04-15 00:56:01.337 Info] Erasing 32768 bytes starting at 0800C000h
- [2025-04-15 00:56:01.342 Info] Erasing 11328 bytes starting at 08014000h
- [2025-04-15 00:56:01.346 Info] Programming 256 bytes starting at 0800C000h
- [2025-04-15 00:56:01.353 Info] Programming 256 bytes starting at 0800C100h
- [2025-04-15 00:56:01.359 Info] Programming 256 bytes starting at 0800C200h
- [2025-04-15 00:56:01.365 Info] Programming 256 bytes starting at 0800C300h
- [2025-04-15 00:56:01.371 Info] Programming 256 bytes starting at 0800C400h
- [2025-04-15 00:56:01.378 Info] Programming 256 bytes starting at 0800C500h
- [2025-04-15 00:56:01.384 Info] Programming 256 bytes starting at 0800C600h
- [2025-04-15 00:56:01.392 Info] Programming 256 bytes starting at 0800C700h
- [2025-04-15 00:56:01.398 Info] Programming 256 bytes starting at 0800C800h
- [2025-04-15 00:56:01.406 Info] Programming 256 bytes starting at 0800C900h
- [2025-04-15 00:56:01.412 Info] Programming 256 bytes starting at 0800CA00h
- [2025-04-15 00:56:01.420 Info] Programming 256 bytes starting at 0800CB00h
- [2025-04-15 00:56:01.426 Info] Programming 256 bytes starting at 0800CC00h
- [2025-04-15 00:56:01.434 Info] Programming 256 bytes starting at 0800CD00h
- [2025-04-15 00:56:01.440 Info] Programming 256 bytes starting at 0800CE00h
- [2025-04-15 00:56:01.448 Info] Programming 256 bytes starting at 0800CF00h
- [2025-04-15 00:56:01.454 Info] Programming 256 bytes starting at 0800D000h
- [2025-04-15 00:56:01.462 Info] Programming 256 bytes starting at 0800D100h
- [2025-04-15 00:56:01.468 Info] Programming 256 bytes starting at 0800D200h
- [2025-04-15 00:56:01.476 Info] Programming 256 bytes starting at 0800D300h
- [2025-04-15 00:56:01.482 Info] Programming 256 bytes starting at 0800D400h
- [2025-04-15 00:56:01.490 Info] Programming 256 bytes starting at 0800D500h
- [2025-04-15 00:56:01.496 Info] Programming 256 bytes starting at 0800D600h
- [2025-04-15 00:56:01.504 Info] Programming 256 bytes starting at 0800D700h
- [2025-04-15 00:56:01.510 Info] Programming 256 bytes starting at 0800D800h
- [2025-04-15 00:56:01.518 Info] Programming 256 bytes starting at 0800D900h
- [2025-04-15 00:56:01.524 Info] Programming 256 bytes starting at 0800DA00h
- [2025-04-15 00:56:01.532 Info] Programming 256 bytes starting at 0800DB00h
- [2025-04-15 00:56:01.539 Info] Programming 256 bytes starting at 0800DC00h
- [2025-04-15 00:56:01.547 Info] Programming 256 bytes starting at 0800DD00h
- [2025-04-15 00:56:01.552 Info] Programming 256 bytes starting at 0800DE00h
- [2025-04-15 00:56:01.560 Info] Programming 256 bytes starting at 0800DF00h
- [2025-04-15 00:56:01.566 Info] Programming 256 bytes starting at 0800E000h
- [2025-04-15 00:56:01.574 Info] Programming 256 bytes starting at 0800E100h
- [2025-04-15 00:56:01.580 Info] Programming 256 bytes starting at 0800E200h
- [2025-04-15 00:56:01.589 Info] Programming 256 bytes starting at 0800E300h
- [2025-04-15 00:56:01.595 Info] Programming 256 bytes starting at 0800E400h
- [2025-04-15 00:56:01.602 Info] Programming 256 bytes starting at 0800E500h
- [2025-04-15 00:56:01.608 Info] Programming 256 bytes starting at 0800E600h
- [2025-04-15 00:56:01.616 Info] Programming 256 bytes starting at 0800E700h
- [2025-04-15 00:56:01.622 Info] Programming 256 bytes starting at 0800E800h
- [2025-04-15 00:56:01.631 Info] Programming 256 bytes starting at 0800E900h
- [2025-04-15 00:56:01.636 Info] Programming 256 bytes starting at 0800EA00h
- [2025-04-15 00:56:01.644 Info] Programming 256 bytes starting at 0800EB00h
- [2025-04-15 00:56:01.650 Info] Programming 256 bytes starting at 0800EC00h
- [2025-04-15 00:56:01.658 Info] Programming 256 bytes starting at 0800ED00h
- [2025-04-15 00:56:01.664 Info] Programming 256 bytes starting at 0800EE00h
- [2025-04-15 00:56:01.672 Info] Programming 256 bytes starting at 0800EF00h
- [2025-04-15 00:56:01.678 Info] Programming 256 bytes starting at 0800F000h
- [2025-04-15 00:56:01.686 Info] Programming 256 bytes starting at 0800F100h
- [2025-04-15 00:56:01.692 Info] Programming 256 bytes starting at 0800F200h
- [2025-04-15 00:56:01.700 Info] Programming 256 bytes starting at 0800F300h
- [2025-04-15 00:56:01.706 Info] Programming 256 bytes starting at 0800F400h
- [2025-04-15 00:56:01.714 Info] Programming 256 bytes starting at 0800F500h
- [2025-04-15 00:56:01.720 Info] Programming 256 bytes starting at 0800F600h
- [2025-04-15 00:56:01.729 Info] Programming 256 bytes starting at 0800F700h
- [2025-04-15 00:56:01.734 Info] Programming 256 bytes starting at 0800F800h
- [2025-04-15 00:56:01.742 Info] Programming 256 bytes starting at 0800F900h
- [2025-04-15 00:56:01.748 Info] Programming 256 bytes starting at 0800FA00h
- [2025-04-15 00:56:01.756 Info] Programming 256 bytes starting at 0800FB00h
- [2025-04-15 00:56:01.762 Info] Programming 256 bytes starting at 0800FC00h
- [2025-04-15 00:56:01.770 Info] Programming 256 bytes starting at 0800FD00h
- [2025-04-15 00:56:01.776 Info] Programming 256 bytes starting at 0800FE00h
- [2025-04-15 00:56:01.784 Info] Programming 256 bytes starting at 0800FF00h
- [2025-04-15 00:56:01.790 Info] Programming 256 bytes starting at 08010000h
- [2025-04-15 00:56:01.798 Info] Programming 256 bytes starting at 08010100h
- [2025-04-15 00:56:01.804 Info] Programming 256 bytes starting at 08010200h
- [2025-04-15 00:56:01.812 Info] Programming 256 bytes starting at 08010300h
- [2025-04-15 00:56:01.818 Info] Programming 256 bytes starting at 08010400h
- [2025-04-15 00:56:01.826 Info] Programming 256 bytes starting at 08010500h
- [2025-04-15 00:56:01.832 Info] Programming 256 bytes starting at 08010600h
- [2025-04-15 00:56:01.840 Info] Programming 256 bytes starting at 08010700h
- [2025-04-15 00:56:01.846 Info] Programming 256 bytes starting at 08010800h
- [2025-04-15 00:56:01.855 Info] Programming 256 bytes starting at 08010900h
- [2025-04-15 00:56:01.861 Info] Programming 256 bytes starting at 08010A00h
- [2025-04-15 00:56:01.869 Info] Programming 256 bytes starting at 08010B00h
- [2025-04-15 00:56:01.875 Info] Programming 256 bytes starting at 08010C00h
- [2025-04-15 00:56:01.883 Info] Programming 256 bytes starting at 08010D00h
- [2025-04-15 00:56:01.889 Info] Programming 256 bytes starting at 08010E00h
- [2025-04-15 00:56:01.897 Info] Programming 256 bytes starting at 08010F00h
- [2025-04-15 00:56:01.904 Info] Programming 256 bytes starting at 08011000h
- [2025-04-15 00:56:01.912 Info] Programming 256 bytes starting at 08011100h
- [2025-04-15 00:56:01.918 Info] Programming 256 bytes starting at 08011200h
- [2025-04-15 00:56:01.926 Info] Programming 256 bytes starting at 08011300h
- [2025-04-15 00:56:01.932 Info] Programming 256 bytes starting at 08011400h
- [2025-04-15 00:56:01.940 Info] Programming 256 bytes starting at 08011500h
- [2025-04-15 00:56:01.946 Info] Programming 256 bytes starting at 08011600h
- [2025-04-15 00:56:01.954 Info] Programming 256 bytes starting at 08011700h
- [2025-04-15 00:56:01.960 Info] Programming 256 bytes starting at 08011800h
- [2025-04-15 00:56:01.968 Info] Programming 256 bytes starting at 08011900h
- [2025-04-15 00:56:01.974 Info] Programming 256 bytes starting at 08011A00h
- [2025-04-15 00:56:01.982 Info] Programming 256 bytes starting at 08011B00h
- [2025-04-15 00:56:01.988 Info] Programming 256 bytes starting at 08011C00h
- [2025-04-15 00:56:01.996 Info] Programming 256 bytes starting at 08011D00h
- [2025-04-15 00:56:02.002 Info] Programming 256 bytes starting at 08011E00h
- [2025-04-15 00:56:02.010 Info] Programming 256 bytes starting at 08011F00h
- [2025-04-15 00:56:02.016 Info] Programming 256 bytes starting at 08012000h
- [2025-04-15 00:56:02.024 Info] Programming 256 bytes starting at 08012100h
- [2025-04-15 00:56:02.030 Info] Programming 256 bytes starting at 08012200h
- [2025-04-15 00:56:02.038 Info] Programming 256 bytes starting at 08012300h
- [2025-04-15 00:56:02.044 Info] Programming 256 bytes starting at 08012400h
- [2025-04-15 00:56:02.052 Info] Programming 256 bytes starting at 08012500h
- [2025-04-15 00:56:02.058 Info] Programming 256 bytes starting at 08012600h
- [2025-04-15 00:56:02.066 Info] Programming 256 bytes starting at 08012700h
- [2025-04-15 00:56:02.072 Info] Programming 256 bytes starting at 08012800h
- [2025-04-15 00:56:02.080 Info] Programming 256 bytes starting at 08012900h
- [2025-04-15 00:56:02.087 Info] Programming 256 bytes starting at 08012A00h
- [2025-04-15 00:56:02.095 Info] Programming 256 bytes starting at 08012B00h
- [2025-04-15 00:56:02.101 Info] Programming 256 bytes starting at 08012C00h
- [2025-04-15 00:56:02.109 Info] Programming 256 bytes starting at 08012D00h
- [2025-04-15 00:56:02.115 Info] Programming 256 bytes starting at 08012E00h
- [2025-04-15 00:56:02.123 Info] Programming 256 bytes starting at 08012F00h
- [2025-04-15 00:56:02.129 Info] Programming 256 bytes starting at 08013000h
- [2025-04-15 00:56:02.137 Info] Programming 256 bytes starting at 08013100h
- [2025-04-15 00:56:02.143 Info] Programming 256 bytes starting at 08013200h
- [2025-04-15 00:56:02.151 Info] Programming 256 bytes starting at 08013300h
- [2025-04-15 00:56:02.157 Info] Programming 256 bytes starting at 08013400h
- [2025-04-15 00:56:02.165 Info] Programming 256 bytes starting at 08013500h
- [2025-04-15 00:56:02.171 Info] Programming 256 bytes starting at 08013600h
- [2025-04-15 00:56:02.179 Info] Programming 256 bytes starting at 08013700h
- [2025-04-15 00:56:02.185 Info] Programming 256 bytes starting at 08013800h
- [2025-04-15 00:56:02.194 Info] Programming 256 bytes starting at 08013900h
- [2025-04-15 00:56:02.200 Info] Programming 256 bytes starting at 08013A00h
- [2025-04-15 00:56:02.208 Info] Programming 256 bytes starting at 08013B00h
- [2025-04-15 00:56:02.214 Info] Programming 256 bytes starting at 08013C00h
- [2025-04-15 00:56:02.222 Info] Programming 256 bytes starting at 08013D00h
- [2025-04-15 00:56:02.228 Info] Programming 256 bytes starting at 08013E00h
- [2025-04-15 00:56:02.236 Info] Programming 256 bytes starting at 08013F00h
- [2025-04-15 00:56:02.242 Info] Programming 256 bytes starting at 08014000h
- [2025-04-15 00:56:02.250 Info] Programming 256 bytes starting at 08014100h
- [2025-04-15 00:56:02.256 Info] Programming 256 bytes starting at 08014200h
- [2025-04-15 00:56:02.264 Info] Programming 256 bytes starting at 08014300h
- [2025-04-15 00:56:02.269 Info] Programming 256 bytes starting at 08014400h
- [2025-04-15 00:56:02.278 Info] Programming 256 bytes starting at 08014500h
- [2025-04-15 00:56:02.283 Info] Programming 256 bytes starting at 08014600h
- [2025-04-15 00:56:02.292 Info] Programming 256 bytes starting at 08014700h
- [2025-04-15 00:56:02.298 Info] Programming 256 bytes starting at 08014800h
- [2025-04-15 00:56:02.305 Info] Programming 256 bytes starting at 08014900h
- [2025-04-15 00:56:02.311 Info] Programming 256 bytes starting at 08014A00h
- [2025-04-15 00:56:02.319 Info] Programming 256 bytes starting at 08014B00h
- [2025-04-15 00:56:02.325 Info] Programming 256 bytes starting at 08014C00h
- [2025-04-15 00:56:02.333 Info] Programming 256 bytes starting at 08014D00h
- [2025-04-15 00:56:02.340 Info] Programming 256 bytes starting at 08014E00h
- [2025-04-15 00:56:02.348 Info] Programming 256 bytes starting at 08014F00h
- [2025-04-15 00:56:02.354 Info] Programming 256 bytes starting at 08015000h
- [2025-04-15 00:56:02.363 Info] Programming 256 bytes starting at 08015100h
- [2025-04-15 00:56:02.368 Info] Programming 256 bytes starting at 08015200h
- [2025-04-15 00:56:02.376 Info] Programming 256 bytes starting at 08015300h
- [2025-04-15 00:56:02.382 Info] Programming 256 bytes starting at 08015400h
- [2025-04-15 00:56:02.391 Info] Programming 256 bytes starting at 08015500h
- [2025-04-15 00:56:02.397 Info] Programming 256 bytes starting at 08015600h
- [2025-04-15 00:56:02.405 Info] Programming 256 bytes starting at 08015700h
- [2025-04-15 00:56:02.410 Info] Programming 256 bytes starting at 08015800h
- [2025-04-15 00:56:02.419 Info] Programming 256 bytes starting at 08015900h
- [2025-04-15 00:56:02.425 Info] Programming 256 bytes starting at 08015A00h
- [2025-04-15 00:56:02.433 Info] Programming 256 bytes starting at 08015B00h
- [2025-04-15 00:56:02.439 Info] Programming 256 bytes starting at 08015C00h
- [2025-04-15 00:56:02.447 Info] Programming 256 bytes starting at 08015D00h
- [2025-04-15 00:56:02.452 Info] Programming 256 bytes starting at 08015E00h
- [2025-04-15 00:56:02.461 Info] Programming 256 bytes starting at 08015F00h
- [2025-04-15 00:56:02.467 Info] Programming 256 bytes starting at 08016000h
- [2025-04-15 00:56:02.475 Info] Programming 256 bytes starting at 08016100h
- [2025-04-15 00:56:02.481 Info] Programming 256 bytes starting at 08016200h
- [2025-04-15 00:56:02.488 Info] Programming 256 bytes starting at 08016300h
- [2025-04-15 00:56:02.494 Info] Programming 256 bytes starting at 08016400h
- [2025-04-15 00:56:02.502 Info] Programming 256 bytes starting at 08016500h
- [2025-04-15 00:56:02.508 Info] Programming 256 bytes starting at 08016600h
- [2025-04-15 00:56:02.516 Info] Programming 256 bytes starting at 08016700h
- [2025-04-15 00:56:02.522 Info] Programming 256 bytes starting at 08016800h
- [2025-04-15 00:56:02.531 Info] Programming 256 bytes starting at 08016900h
- [2025-04-15 00:56:02.537 Info] Programming 256 bytes starting at 08016A00h
- [2025-04-15 00:56:02.545 Info] Programming 256 bytes starting at 08016B00h
- [2025-04-15 00:56:02.550 Info] Programming 64 bytes starting at 08016C00h
- [2025-04-15 00:56:02.556 Info] Finishing programming session
- [2025-04-15 00:56:02.560 Info] Firmware update completed successfully
+ [2025-06-19 20:36:27.855 Info] Starting firmware update
+ [2025-06-19 20:36:27.855 Info] Specified firmware file: D:\Documents\git\CBFirmware\Prog\Debug\f405rgt6.srec
+ [2025-06-19 20:36:27.856 Info] Using LibOpenBLT version 1.03.12
+ [2025-06-19 20:36:27.856 Info] Detected session protocol: XCP version 1.0
+ [2025-06-19 20:36:27.856 Info] Using session protocol settings:
+ [2025-06-19 20:36:27.856 Info]   -> Timeout T1: 1000 ms
+ [2025-06-19 20:36:27.856 Info]   -> Timeout T3: 2000 ms
+ [2025-06-19 20:36:27.856 Info]   -> Timeout T4: 10000 ms
+ [2025-06-19 20:36:27.859 Info]   -> Timeout T5: 1000 ms
+ [2025-06-19 20:36:27.859 Info]   -> Timeout T6: 50 ms
+ [2025-06-19 20:36:27.859 Info]   -> Timeout T7: 2000 ms
+ [2025-06-19 20:36:27.859 Info]   -> Seed/Key file: None
+ [2025-06-19 20:36:27.859 Info]   -> Connection mode: 0
+ [2025-06-19 20:36:27.860 Info] Detected transport layer: XCP on USB
+ [2025-06-19 20:36:27.860 Info] Using transport layer settings:
+ [2025-06-19 20:36:27.860 Info]   -> No additional settings required
+ [2025-06-19 20:36:27.860 Info] Initializing firmware update engine
+ [2025-06-19 20:36:27.860 Info] Loading firmware data from file
+ [2025-06-19 20:36:27.877 Info]   -> Number of segments: 1
+ [2025-06-19 20:36:27.877 Info]   -> Base memory address: 0800C000h
+ [2025-06-19 20:36:27.877 Info]   -> Total data size: 45656
+ [2025-06-19 20:36:27.877 Info] Connecting to the target
+ [2025-06-19 20:36:27.880 Info] Erasing 32768 bytes starting at 0800C000h
+ [2025-06-19 20:36:28.581 Info] Erasing 12888 bytes starting at 08014000h
+ [2025-06-19 20:36:28.585 Info] Programming 256 bytes starting at 0800C000h
+ [2025-06-19 20:36:28.591 Info] Programming 256 bytes starting at 0800C100h
+ [2025-06-19 20:36:28.597 Info] Programming 256 bytes starting at 0800C200h
+ [2025-06-19 20:36:28.603 Info] Programming 256 bytes starting at 0800C300h
+ [2025-06-19 20:36:28.609 Info] Programming 256 bytes starting at 0800C400h
+ [2025-06-19 20:36:28.617 Info] Programming 256 bytes starting at 0800C500h
+ [2025-06-19 20:36:28.623 Info] Programming 256 bytes starting at 0800C600h
+ [2025-06-19 20:36:28.631 Info] Programming 256 bytes starting at 0800C700h
+ [2025-06-19 20:36:28.637 Info] Programming 256 bytes starting at 0800C800h
+ [2025-06-19 20:36:28.646 Info] Programming 256 bytes starting at 0800C900h
+ [2025-06-19 20:36:28.651 Info] Programming 256 bytes starting at 0800CA00h
+ [2025-06-19 20:36:28.659 Info] Programming 256 bytes starting at 0800CB00h
+ [2025-06-19 20:36:28.665 Info] Programming 256 bytes starting at 0800CC00h
+ [2025-06-19 20:36:28.673 Info] Programming 256 bytes starting at 0800CD00h
+ [2025-06-19 20:36:28.679 Info] Programming 256 bytes starting at 0800CE00h
+ [2025-06-19 20:36:28.687 Info] Programming 256 bytes starting at 0800CF00h
+ [2025-06-19 20:36:28.693 Info] Programming 256 bytes starting at 0800D000h
+ [2025-06-19 20:36:28.701 Info] Programming 256 bytes starting at 0800D100h
+ [2025-06-19 20:36:28.707 Info] Programming 256 bytes starting at 0800D200h
+ [2025-06-19 20:36:28.715 Info] Programming 256 bytes starting at 0800D300h
+ [2025-06-19 20:36:28.721 Info] Programming 256 bytes starting at 0800D400h
+ [2025-06-19 20:36:28.729 Info] Programming 256 bytes starting at 0800D500h
+ [2025-06-19 20:36:28.735 Info] Programming 256 bytes starting at 0800D600h
+ [2025-06-19 20:36:28.743 Info] Programming 256 bytes starting at 0800D700h
+ [2025-06-19 20:36:28.749 Info] Programming 256 bytes starting at 0800D800h
+ [2025-06-19 20:36:28.757 Info] Programming 256 bytes starting at 0800D900h
+ [2025-06-19 20:36:28.764 Info] Programming 256 bytes starting at 0800DA00h
+ [2025-06-19 20:36:28.771 Info] Programming 256 bytes starting at 0800DB00h
+ [2025-06-19 20:36:28.777 Info] Programming 256 bytes starting at 0800DC00h
+ [2025-06-19 20:36:28.785 Info] Programming 256 bytes starting at 0800DD00h
+ [2025-06-19 20:36:28.791 Info] Programming 256 bytes starting at 0800DE00h
+ [2025-06-19 20:36:28.799 Info] Programming 256 bytes starting at 0800DF00h
+ [2025-06-19 20:36:28.805 Info] Programming 256 bytes starting at 0800E000h
+ [2025-06-19 20:36:28.813 Info] Programming 256 bytes starting at 0800E100h
+ [2025-06-19 20:36:28.820 Info] Programming 256 bytes starting at 0800E200h
+ [2025-06-19 20:36:28.828 Info] Programming 256 bytes starting at 0800E300h
+ [2025-06-19 20:36:28.834 Info] Programming 256 bytes starting at 0800E400h
+ [2025-06-19 20:36:28.841 Info] Programming 256 bytes starting at 0800E500h
+ [2025-06-19 20:36:28.847 Info] Programming 256 bytes starting at 0800E600h
+ [2025-06-19 20:36:28.856 Info] Programming 256 bytes starting at 0800E700h
+ [2025-06-19 20:36:28.861 Info] Programming 256 bytes starting at 0800E800h
+ [2025-06-19 20:36:28.870 Info] Programming 256 bytes starting at 0800E900h
+ [2025-06-19 20:36:28.875 Info] Programming 256 bytes starting at 0800EA00h
+ [2025-06-19 20:36:28.884 Info] Programming 256 bytes starting at 0800EB00h
+ [2025-06-19 20:36:28.889 Info] Programming 256 bytes starting at 0800EC00h
+ [2025-06-19 20:36:28.897 Info] Programming 256 bytes starting at 0800ED00h
+ [2025-06-19 20:36:28.904 Info] Programming 256 bytes starting at 0800EE00h
+ [2025-06-19 20:36:28.911 Info] Programming 256 bytes starting at 0800EF00h
+ [2025-06-19 20:36:28.918 Info] Programming 256 bytes starting at 0800F000h
+ [2025-06-19 20:36:28.925 Info] Programming 256 bytes starting at 0800F100h
+ [2025-06-19 20:36:28.932 Info] Programming 256 bytes starting at 0800F200h
+ [2025-06-19 20:36:28.939 Info] Programming 256 bytes starting at 0800F300h
+ [2025-06-19 20:36:28.945 Info] Programming 256 bytes starting at 0800F400h
+ [2025-06-19 20:36:28.953 Info] Programming 256 bytes starting at 0800F500h
+ [2025-06-19 20:36:28.960 Info] Programming 256 bytes starting at 0800F600h
+ [2025-06-19 20:36:28.968 Info] Programming 256 bytes starting at 0800F700h
+ [2025-06-19 20:36:28.974 Info] Programming 256 bytes starting at 0800F800h
+ [2025-06-19 20:36:28.982 Info] Programming 256 bytes starting at 0800F900h
+ [2025-06-19 20:36:28.988 Info] Programming 256 bytes starting at 0800FA00h
+ [2025-06-19 20:36:28.996 Info] Programming 256 bytes starting at 0800FB00h
+ [2025-06-19 20:36:29.001 Info] Programming 256 bytes starting at 0800FC00h
+ [2025-06-19 20:36:29.009 Info] Programming 256 bytes starting at 0800FD00h
+ [2025-06-19 20:36:29.015 Info] Programming 256 bytes starting at 0800FE00h
+ [2025-06-19 20:36:29.023 Info] Programming 256 bytes starting at 0800FF00h
+ [2025-06-19 20:36:29.029 Info] Programming 256 bytes starting at 08010000h
+ [2025-06-19 20:36:29.037 Info] Programming 256 bytes starting at 08010100h
+ [2025-06-19 20:36:29.043 Info] Programming 256 bytes starting at 08010200h
+ [2025-06-19 20:36:29.051 Info] Programming 256 bytes starting at 08010300h
+ [2025-06-19 20:36:29.057 Info] Programming 256 bytes starting at 08010400h
+ [2025-06-19 20:36:29.065 Info] Programming 256 bytes starting at 08010500h
+ [2025-06-19 20:36:29.071 Info] Programming 256 bytes starting at 08010600h
+ [2025-06-19 20:36:29.079 Info] Programming 256 bytes starting at 08010700h
+ [2025-06-19 20:36:29.085 Info] Programming 256 bytes starting at 08010800h
+ [2025-06-19 20:36:29.094 Info] Programming 256 bytes starting at 08010900h
+ [2025-06-19 20:36:29.099 Info] Programming 256 bytes starting at 08010A00h
+ [2025-06-19 20:36:29.108 Info] Programming 256 bytes starting at 08010B00h
+ [2025-06-19 20:36:29.114 Info] Programming 256 bytes starting at 08010C00h
+ [2025-06-19 20:36:29.121 Info] Programming 256 bytes starting at 08010D00h
+ [2025-06-19 20:36:29.127 Info] Programming 256 bytes starting at 08010E00h
+ [2025-06-19 20:36:29.136 Info] Programming 256 bytes starting at 08010F00h
+ [2025-06-19 20:36:29.141 Info] Programming 256 bytes starting at 08011000h
+ [2025-06-19 20:36:29.150 Info] Programming 256 bytes starting at 08011100h
+ [2025-06-19 20:36:29.156 Info] Programming 256 bytes starting at 08011200h
+ [2025-06-19 20:36:29.163 Info] Programming 256 bytes starting at 08011300h
+ [2025-06-19 20:36:29.169 Info] Programming 256 bytes starting at 08011400h
+ [2025-06-19 20:36:29.178 Info] Programming 256 bytes starting at 08011500h
+ [2025-06-19 20:36:29.184 Info] Programming 256 bytes starting at 08011600h
+ [2025-06-19 20:36:29.191 Info] Programming 256 bytes starting at 08011700h
+ [2025-06-19 20:36:29.197 Info] Programming 256 bytes starting at 08011800h
+ [2025-06-19 20:36:29.205 Info] Programming 256 bytes starting at 08011900h
+ [2025-06-19 20:36:29.211 Info] Programming 256 bytes starting at 08011A00h
+ [2025-06-19 20:36:29.219 Info] Programming 256 bytes starting at 08011B00h
+ [2025-06-19 20:36:29.225 Info] Programming 256 bytes starting at 08011C00h
+ [2025-06-19 20:36:29.234 Info] Programming 256 bytes starting at 08011D00h
+ [2025-06-19 20:36:29.239 Info] Programming 256 bytes starting at 08011E00h
+ [2025-06-19 20:36:29.248 Info] Programming 256 bytes starting at 08011F00h
+ [2025-06-19 20:36:29.254 Info] Programming 256 bytes starting at 08012000h
+ [2025-06-19 20:36:29.262 Info] Programming 256 bytes starting at 08012100h
+ [2025-06-19 20:36:29.268 Info] Programming 256 bytes starting at 08012200h
+ [2025-06-19 20:36:29.276 Info] Programming 256 bytes starting at 08012300h
+ [2025-06-19 20:36:29.281 Info] Programming 256 bytes starting at 08012400h
+ [2025-06-19 20:36:29.290 Info] Programming 256 bytes starting at 08012500h
+ [2025-06-19 20:36:29.295 Info] Programming 256 bytes starting at 08012600h
+ [2025-06-19 20:36:29.303 Info] Programming 256 bytes starting at 08012700h
+ [2025-06-19 20:36:29.309 Info] Programming 256 bytes starting at 08012800h
+ [2025-06-19 20:36:29.318 Info] Programming 256 bytes starting at 08012900h
+ [2025-06-19 20:36:29.323 Info] Programming 256 bytes starting at 08012A00h
+ [2025-06-19 20:36:29.332 Info] Programming 256 bytes starting at 08012B00h
+ [2025-06-19 20:36:29.337 Info] Programming 256 bytes starting at 08012C00h
+ [2025-06-19 20:36:29.345 Info] Programming 256 bytes starting at 08012D00h
+ [2025-06-19 20:36:29.352 Info] Programming 256 bytes starting at 08012E00h
+ [2025-06-19 20:36:29.360 Info] Programming 256 bytes starting at 08012F00h
+ [2025-06-19 20:36:29.365 Info] Programming 256 bytes starting at 08013000h
+ [2025-06-19 20:36:29.373 Info] Programming 256 bytes starting at 08013100h
+ [2025-06-19 20:36:29.379 Info] Programming 256 bytes starting at 08013200h
+ [2025-06-19 20:36:29.387 Info] Programming 256 bytes starting at 08013300h
+ [2025-06-19 20:36:29.393 Info] Programming 256 bytes starting at 08013400h
+ [2025-06-19 20:36:29.401 Info] Programming 256 bytes starting at 08013500h
+ [2025-06-19 20:36:29.407 Info] Programming 256 bytes starting at 08013600h
+ [2025-06-19 20:36:29.415 Info] Programming 256 bytes starting at 08013700h
+ [2025-06-19 20:36:29.421 Info] Programming 256 bytes starting at 08013800h
+ [2025-06-19 20:36:29.429 Info] Programming 256 bytes starting at 08013900h
+ [2025-06-19 20:36:29.435 Info] Programming 256 bytes starting at 08013A00h
+ [2025-06-19 20:36:29.444 Info] Programming 256 bytes starting at 08013B00h
+ [2025-06-19 20:36:29.449 Info] Programming 256 bytes starting at 08013C00h
+ [2025-06-19 20:36:29.457 Info] Programming 256 bytes starting at 08013D00h
+ [2025-06-19 20:36:29.463 Info] Programming 256 bytes starting at 08013E00h
+ [2025-06-19 20:36:29.471 Info] Programming 256 bytes starting at 08013F00h
+ [2025-06-19 20:36:29.477 Info] Programming 256 bytes starting at 08014000h
+ [2025-06-19 20:36:29.485 Info] Programming 256 bytes starting at 08014100h
+ [2025-06-19 20:36:29.491 Info] Programming 256 bytes starting at 08014200h
+ [2025-06-19 20:36:29.499 Info] Programming 256 bytes starting at 08014300h
+ [2025-06-19 20:36:29.506 Info] Programming 256 bytes starting at 08014400h
+ [2025-06-19 20:36:29.513 Info] Programming 256 bytes starting at 08014500h
+ [2025-06-19 20:36:29.519 Info] Programming 256 bytes starting at 08014600h
+ [2025-06-19 20:36:29.528 Info] Programming 256 bytes starting at 08014700h
+ [2025-06-19 20:36:29.533 Info] Programming 256 bytes starting at 08014800h
+ [2025-06-19 20:36:29.542 Info] Programming 256 bytes starting at 08014900h
+ [2025-06-19 20:36:29.547 Info] Programming 256 bytes starting at 08014A00h
+ [2025-06-19 20:36:29.556 Info] Programming 256 bytes starting at 08014B00h
+ [2025-06-19 20:36:29.561 Info] Programming 256 bytes starting at 08014C00h
+ [2025-06-19 20:36:29.570 Info] Programming 256 bytes starting at 08014D00h
+ [2025-06-19 20:36:29.576 Info] Programming 256 bytes starting at 08014E00h
+ [2025-06-19 20:36:29.584 Info] Programming 256 bytes starting at 08014F00h
+ [2025-06-19 20:36:29.590 Info] Programming 256 bytes starting at 08015000h
+ [2025-06-19 20:36:29.598 Info] Programming 256 bytes starting at 08015100h
+ [2025-06-19 20:36:29.604 Info] Programming 256 bytes starting at 08015200h
+ [2025-06-19 20:36:29.612 Info] Programming 256 bytes starting at 08015300h
+ [2025-06-19 20:36:29.617 Info] Programming 256 bytes starting at 08015400h
+ [2025-06-19 20:36:29.626 Info] Programming 256 bytes starting at 08015500h
+ [2025-06-19 20:36:29.631 Info] Programming 256 bytes starting at 08015600h
+ [2025-06-19 20:36:29.639 Info] Programming 256 bytes starting at 08015700h
+ [2025-06-19 20:36:29.646 Info] Programming 256 bytes starting at 08015800h
+ [2025-06-19 20:36:29.654 Info] Programming 256 bytes starting at 08015900h
+ [2025-06-19 20:36:29.660 Info] Programming 256 bytes starting at 08015A00h
+ [2025-06-19 20:36:29.669 Info] Programming 256 bytes starting at 08015B00h
+ [2025-06-19 20:36:29.675 Info] Programming 256 bytes starting at 08015C00h
+ [2025-06-19 20:36:29.682 Info] Programming 256 bytes starting at 08015D00h
+ [2025-06-19 20:36:29.689 Info] Programming 256 bytes starting at 08015E00h
+ [2025-06-19 20:36:29.697 Info] Programming 256 bytes starting at 08015F00h
+ [2025-06-19 20:36:29.702 Info] Programming 256 bytes starting at 08016000h
+ [2025-06-19 20:36:29.711 Info] Programming 256 bytes starting at 08016100h
+ [2025-06-19 20:36:29.717 Info] Programming 256 bytes starting at 08016200h
+ [2025-06-19 20:36:29.725 Info] Programming 256 bytes starting at 08016300h
+ [2025-06-19 20:36:29.730 Info] Programming 256 bytes starting at 08016400h
+ [2025-06-19 20:36:29.738 Info] Programming 256 bytes starting at 08016500h
+ [2025-06-19 20:36:29.744 Info] Programming 256 bytes starting at 08016600h
+ [2025-06-19 20:36:29.752 Info] Programming 256 bytes starting at 08016700h
+ [2025-06-19 20:36:29.758 Info] Programming 256 bytes starting at 08016800h
+ [2025-06-19 20:36:29.767 Info] Programming 256 bytes starting at 08016900h
+ [2025-06-19 20:36:29.773 Info] Programming 256 bytes starting at 08016A00h
+ [2025-06-19 20:36:29.781 Info] Programming 256 bytes starting at 08016B00h
+ [2025-06-19 20:36:29.787 Info] Programming 256 bytes starting at 08016C00h
+ [2025-06-19 20:36:29.795 Info] Programming 256 bytes starting at 08016D00h
+ [2025-06-19 20:36:29.800 Info] Programming 256 bytes starting at 08016E00h
+ [2025-06-19 20:36:29.809 Info] Programming 256 bytes starting at 08016F00h
+ [2025-06-19 20:36:29.815 Info] Programming 256 bytes starting at 08017000h
+ [2025-06-19 20:36:29.822 Info] Programming 256 bytes starting at 08017100h
+ [2025-06-19 20:36:29.829 Info] Programming 88 bytes starting at 08017200h
+ [2025-06-19 20:36:29.835 Info] Finishing programming session
+ [2025-06-19 20:36:29.839 Info] Firmware update completed successfully
