@@ -30,9 +30,11 @@ extern "C"
 #endif
 }
 #include "settings.h"
+#include "outputch.h"
+#include "status.h"
+
 #include "usbd_cdc_if.h"
 #include <string.h>
-#include "outputch.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_can.h"
 
@@ -47,6 +49,10 @@ extern "C"
 /* USER CODE BEGIN PD */
 #define RX_LENGHT 			512 				//все равно надо вручную прописать в usbd_cdc_if.h
 //#define BYTES_AR_SIZE 		338					//размер передаваемой строки в байтах
+#define FILTER				2					// = (filtered * FILTER + new_val)/ (FILTER + 1)
+#define ADC_CHANNEL_COUNT 	9
+#define VCC_COEFF			461
+#define VREF_CAL *VREFINT_CAL_ADDR
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,6 +62,7 @@ extern "C"
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 CAN_HandleTypeDef hcan1;
 
@@ -76,12 +83,16 @@ uint16_t 	secFromStart = 0,
 			msFromStart = 0,
 			updTimer = 0;
 
+uint16_t adc_raw[ADC_CHANNEL_COUNT];        // Сырые значения из DMA
+ADC_Data_t adc_filtered;					//структура с данными каналов
+
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_CAN1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_ADC1_Init(void);
@@ -165,6 +176,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_CAN1_Init();
   MX_USART1_UART_Init();
   MX_ADC1_Init();
@@ -178,23 +190,42 @@ int main(void)
   AppInit();
 //=============================================CAN CONFIG
 
-//  CAN_FilterTypeDef canFilterConfig;
-//  canFilterConfig.FilterBank = 0;
-//  canFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
-//  canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
-//  canFilterConfig.FilterIdHigh = CANFILTER_1;				//устаенавливаем фильтра на ID сообщений CAN
-//  canFilterConfig.FilterIdLow = 0x0000;
-//  canFilterConfig.FilterMaskIdHigh = CANFILTER_2;
-//  canFilterConfig.FilterMaskIdLow = 0x0000;
-//  canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-//  canFilterConfig.FilterActivation = ENABLE;
-//  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
-//
-//  canFilterConfig.FilterBank = 1;
-//  canFilterConfig.FilterIdHigh = CANFILTER_3;				//устаенавливаем фильтра на ID сообщений CAN
-//  canFilterConfig.FilterMaskIdHigh = CANFILTER_4;
-//  HAL_CAN_ConfigFilter(&hcan, &canFilterConfig);
+  CAN_FilterTypeDef canFilterConfig;
+  canFilterConfig.FilterBank = 0;
+  canFilterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
+  canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  canFilterConfig.FilterIdHigh = CANFILTER_1 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterIdLow = 0x0000;
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_2 << 5;
+  canFilterConfig.FilterMaskIdLow = 0x0000;
+  canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
+  canFilterConfig.FilterActivation = ENABLE;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
 
+  canFilterConfig.FilterBank = 1;
+  canFilterConfig.FilterIdHigh = CANFILTER_3 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_4 << 5;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
+
+  canFilterConfig.FilterBank = 2;
+  canFilterConfig.FilterIdHigh = CANFILTER_5 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_6 << 5;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
+
+  canFilterConfig.FilterBank = 3;
+  canFilterConfig.FilterIdHigh = CANFILTER_7 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_8 << 5;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
+
+  canFilterConfig.FilterBank = 4;
+  canFilterConfig.FilterIdHigh = CANFILTER_9 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_10 << 5;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
+
+  canFilterConfig.FilterBank = 5;
+  canFilterConfig.FilterIdHigh = CANFILTER_11 << 5;				//устаенавливаем фильтра на ID сообщений CAN
+  canFilterConfig.FilterMaskIdHigh = CANFILTER_12 << 5;
+  HAL_CAN_ConfigFilter(&hcan1, &canFilterConfig);
 
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO1_MSG_PENDING);
@@ -202,6 +233,9 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
   HAL_Delay(500);
   HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_raw, ADC_CHANNEL_COUNT);
+
 
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
@@ -221,6 +255,8 @@ int main(void)
   __enable_irq();
 //  param.saveToFlash();
   param.readFromFlash();
+
+
 
   /* USER CODE END 2 */
 
@@ -316,15 +352,15 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.NbrOfConversion = 9;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -332,9 +368,81 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Rank = 2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Rank = 3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Rank = 4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_7;
+  sConfig.Rank = 5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_14;
+  sConfig.Rank = 6;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = 7;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  sConfig.Rank = 8;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Rank = 9;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -362,13 +470,13 @@ static void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 4;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.Mode = CAN_MODE_SILENT;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_14TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_3TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = ENABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoWakeUp = ENABLE;
   hcan1.Init.AutoRetransmission = DISABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
@@ -476,8 +584,8 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
@@ -648,6 +756,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -708,6 +832,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 
 }
+
+//================================================================ADC================================================================
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+{
+	if (hadc->Instance == ADC1)
+	{
+		adc_filtered.VCC      = (adc_filtered.VCC     * FILTER + (uint16_t)((float)adc_raw[0] * (float)(3300.0f / 4095.0f * 4.615f))) / (FILTER + 1);
+
+		adc_filtered.CH0      = (adc_filtered.CH0     * FILTER + adc_raw[1]) / (FILTER + 1);
+		adc_filtered.CH1      = (adc_filtered.CH1     * FILTER + adc_raw[2]) / (FILTER + 1);
+		adc_filtered.CH2      = (adc_filtered.CH2     * FILTER + adc_raw[3]) / (FILTER + 1);
+		adc_filtered.CH3      = (adc_filtered.CH3     * FILTER + adc_raw[4]) / (FILTER + 1);
+		adc_filtered.CH4      = (adc_filtered.CH4     * FILTER + adc_raw[5]) / (FILTER + 1);
+		adc_filtered.CH5      = (adc_filtered.CH5     * FILTER + adc_raw[6]) / (FILTER + 1);
+
+		adc_filtered.Temperature  = (adc_filtered.Temperature * FILTER + adc_raw[7]) / (FILTER + 1);
+		adc_filtered.Vref         = (adc_filtered.Vref        * FILTER + (uint16_t)((float)(3300.0f * VREF_CAL) / (float)adc_raw[8])) / (FILTER + 1);
+	}
+}
+
 //================================================================CAN MESSAGES RX================================================================
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
@@ -747,13 +891,13 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 	}
 }
 
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-    if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &rxCanHeader, rxCanData) == HAL_OK)
-    {
-        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
-    }
-}
+//void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+//{
+//    if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &rxCanHeader, rxCanData) == HAL_OK)
+//    {
+//        HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+//    }
+//}
 
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 {

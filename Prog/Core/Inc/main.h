@@ -36,7 +36,17 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef struct {
+    uint16_t VCC;
+    uint16_t CH0;      // ADC1_IN1
+    uint16_t CH1;      // ADC1_IN4
+    uint16_t CH2;      // ADC1_IN5
+    uint16_t CH3;      // ADC1_IN6
+    uint16_t CH4;      // ADC1_IN7
+    uint16_t CH5;      // ADC1_IN14
+    uint16_t Temperature;  // ADC1_IN16 (TempSensor)
+    uint16_t Vref;         // ADC1_IN17
+} ADC_Data_t;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -105,6 +115,9 @@ void processUabCommand();
 #define CANFILTER_7				0x00
 #define CANFILTER_8				0x00
 #define CANFILTER_9				0x00
+#define CANFILTER_10			0x00
+#define CANFILTER_11			0x00
+#define CANFILTER_12			0x00
 
 /* USER CODE END Private defines */
 
