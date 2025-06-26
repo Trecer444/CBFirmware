@@ -75,6 +75,7 @@ public:
     uint8_t saveToFlash();
     uint8_t readFromFlash();
     void composeAllParamsString(char *outString);
+    chSpec* getChSpec(uint8_t chN);
 
 };
 

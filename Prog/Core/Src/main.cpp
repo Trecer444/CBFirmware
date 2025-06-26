@@ -32,6 +32,7 @@ extern "C"
 #include "settings.h"
 #include "outputch.h"
 #include "status.h"
+#include "canHandler.h"
 
 #include "usbd_cdc_if.h"
 #include <string.h>
@@ -69,6 +70,7 @@ CAN_HandleTypeDef hcan1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
+TIM_HandleTypeDef htim12;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -82,10 +84,15 @@ Param param;
 uint16_t 	secFromStart = 0,
 			msFromStart = 0,
 			updTimer = 0;
+uint8_t flagUpdCh = 0;
 
 uint16_t adc_raw[ADC_CHANNEL_COUNT];        // Сырые значения из DMA
 ADC_Data_t adc_filtered;					//структура с данными каналов
 
+status currStatus;
+canHandler canMsgHandler(&currStatus);
+
+OutputCh* CH[6];					// Массив из 6 указателей на объекты OutputCh
 
 /* USER CODE END PV */
 
@@ -100,19 +107,14 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_TIM12_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//OutputCh CH0(GPIOB,  14, &htim8);
-//OutputCh CH1(GPIOB,  15, &htim8);
-//OutputCh CH2(GPIOC,  6, &htim8);
-//OutputCh CH3(GPIOC,  7, &htim8);
-//OutputCh CH4(GPIOC,  8, &htim8);
-//OutputCh CH5(GPIOC,  9, &htim8);
-OutputCh* CH[6];
+
 
 /**
   * @brief  Vector base address configuration. It should no longer be at the start of
@@ -144,12 +146,12 @@ int main(void)
   /* Configure the vector table base address. */
   VectorBase_Config();
 
-  OutputCh CH0(GPIOB,  14, &htim8);
-  OutputCh CH1(GPIOB,  15, &htim8);
-  OutputCh CH2(GPIOC,  6, &htim8);
-  OutputCh CH3(GPIOC,  7, &htim8);
-  OutputCh CH4(GPIOC,  8, &htim8);
-  OutputCh CH5(GPIOC,  9, &htim8);
+  OutputCh CH0(GPIOB,  14, &htim12, &currStatus);
+  OutputCh CH1(GPIOB,  15, &htim12, &currStatus);
+  OutputCh CH2(GPIOC,  6, &htim8, &currStatus);
+  OutputCh CH3(GPIOC,  7, &htim8, &currStatus);
+  OutputCh CH4(GPIOC,  8, &htim8, &currStatus);
+  OutputCh CH5(GPIOC,  9, &htim8, &currStatus);
   CH[0] = &CH0;
   CH[1] = &CH1;
   CH[2] = &CH2;
@@ -185,9 +187,13 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM8_Init();
+  MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
   /* Initialize the user program application. */
   AppInit();
+
+
+
 //=============================================CAN CONFIG
 
   CAN_FilterTypeDef canFilterConfig;
@@ -245,10 +251,15 @@ int main(void)
   TIM8->CCR2 = 0;
   TIM8->CCR3 = 0;
   TIM8->CCR4 = 0;
+  TIM12->CCR1 = 0;
+  TIM12->CCR2 = 0;
+
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4);
+  HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2);
 
 
 
@@ -257,24 +268,29 @@ int main(void)
   param.readFromFlash();
 
 
-
+  setChSettings();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    	CH[3]->turnOnCh();
-    	CH[4]->turnOnCh();
-    	CH[5]->turnOnCh();
-    	HAL_Delay(300);
-    	CH[5]->turnOffCh();
-    	CH[4]->turnOffCh();
-    	CH[3]->turnOffCh();
-    	HAL_Delay(300);
+//    	CH[3]->turnOnCh();
+//    	CH[4]->turnOnCh();
+//    	CH[5]->turnOnCh();
+//    	HAL_Delay(300);
+//    	CH[5]->turnOffCh();
+//    	CH[4]->turnOffCh();
+//    	CH[3]->turnOffCh();
+//    	HAL_Delay(300);
 
 
-    	processUabCommand();
+    	processUsbCommand();
+    	for (int i = 0; i < 6; i++)
+    	{
+    		CH[i]->updateCh();
+    	}
+    	HAL_Delay(15);
 
     /* USER CODE END WHILE */
 
@@ -636,10 +652,6 @@ static void MX_TIM8_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_OC_Init(&htim8) != HAL_OK)
-  {
-    Error_Handler();
-  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim8, &sMasterConfig) != HAL_OK)
@@ -661,12 +673,10 @@ static void MX_TIM8_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_TIMING;
-  if (HAL_TIM_OC_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
   if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
@@ -686,6 +696,62 @@ static void MX_TIM8_Init(void)
 
   /* USER CODE END TIM8_Init 2 */
   HAL_TIM_MspPostInit(&htim8);
+
+}
+
+/**
+  * @brief TIM12 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM12_Init(void)
+{
+
+  /* USER CODE BEGIN TIM12_Init 0 */
+
+  /* USER CODE END TIM12_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM12_Init 1 */
+
+  /* USER CODE END TIM12_Init 1 */
+  htim12.Instance = TIM12;
+  htim12.Init.Prescaler = 359;
+  htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim12.Init.Period = 359;
+  htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim12.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim12) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim12, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim12) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM12_Init 2 */
+
+  /* USER CODE END TIM12_Init 2 */
+  HAL_TIM_MspPostInit(&htim12);
 
 }
 
@@ -789,10 +855,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LED_Pin|LM_EN_Pin|CH1_Pin|CH2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LED_Pin|LM_EN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : LED_Pin LM_EN_Pin CH1_Pin CH2_Pin */
-  GPIO_InitStruct.Pin = LED_Pin|LM_EN_Pin|CH1_Pin|CH2_Pin;
+  /*Configure GPIO pins : LED_Pin LM_EN_Pin */
+  GPIO_InitStruct.Pin = LED_Pin|LM_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -820,10 +886,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM3) //каждую милисекунду
 	{
 		msFromStart++;
-		if (updTimer >=5)
+		if (updTimer >=20)
 		{
 			updTimer = 0;
-//			CH1.updateCh();
+			flagUpdCh = 1;
 		}
 		else
 		{
@@ -857,36 +923,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 {
 	if(HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &rxCanHeader, rxCanData) == HAL_OK)
 	{
-		if (rxCanData[7] == 0xCF)
-		{
-			for (int i = 0; i < 6; i++)
-			{
-				if (param.getSourceSign(i) == HEATER)
-				{
-					CH[i]->buttonTriggered(0);
-				}
-			}
-		}
-		if (rxCanData[7] == 0xDF)
-		{
-			for (int i = 0; i < 6; i++)
-			{
-				if (param.getSourceSign(i) == HEATER)
-				{
-					CH[i]->buttonTriggered(1);
-				}
-			}
-		}
-		if (rxCanData[7] == 0xEF)
-		{
-			for (int i = 0; i < 6; i++)
-			{
-				if (param.getSourceSign(i) == HEATER)
-				{
-					CH[i]->buttonTriggered(2);
-				}
-			}
-		}
+
+		canMsgHandler.peocessCanMessage(&rxCanHeader, rxCanData);
 		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 	}
 }
@@ -907,7 +945,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan)
 }
 
 //================================================================USB================================================================
-void processUabCommand()
+void processUsbCommand()
 {
 	uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
 	if (bytesAvailable > 0)
@@ -952,6 +990,17 @@ void processUabCommand()
 	}
 }
 
+
+
+void setChSettings()
+{
+	  for (int i = 0; i < 6; i++)
+	    {
+	  	  CH[i]->setChSettingsCh(param.getChSpec(i));
+	    }
+
+}
+
 void handleUsbCommand(char* cmd)
 {
 	if (strncmp(cmd, "#GET-ParamList", 14) == 0)
@@ -966,6 +1015,7 @@ void handleUsbCommand(char* cmd)
 		// Попытка интерпретации как строки параметров
 		param.setParam(cmd);
 		param.saveToFlash();
+		setChSettings();
 
 		const char ok[] = "OK\n";
 		while (CDC_Transmit_FS((uint8_t*)ok, sizeof(ok) - 1) != USBD_OK);

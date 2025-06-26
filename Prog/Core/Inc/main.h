@@ -67,7 +67,8 @@ void Error_Handler(void);
 /* USER CODE BEGIN EFP */
 void readDataFromEEPROM();
 void handleUsbCommand(char* cmd);
-void processUabCommand();
+void processUsbCommand();
+void setChSettings();
 
 /* USER CODE END EFP */
 
@@ -90,10 +91,10 @@ void processUabCommand();
 #define LED_GPIO_Port GPIOB
 #define LM_EN_Pin GPIO_PIN_13
 #define LM_EN_GPIO_Port GPIOB
-#define CH1_Pin GPIO_PIN_14
-#define CH1_GPIO_Port GPIOB
-#define CH2_Pin GPIO_PIN_15
-#define CH2_GPIO_Port GPIOB
+#define CH1_PWM_Pin GPIO_PIN_14
+#define CH1_PWM_GPIO_Port GPIOB
+#define CH2_PWM_Pin GPIO_PIN_15
+#define CH2_PWM_GPIO_Port GPIOB
 #define CH3_PWM_Pin GPIO_PIN_6
 #define CH3_PWM_GPIO_Port GPIOC
 #define CH4_PWM_Pin GPIO_PIN_7

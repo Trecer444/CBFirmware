@@ -23,43 +23,84 @@ void OutputCh::activateCh()
 
 void OutputCh::setChSettingsCh(chSpec* settings)
 {
-	this->signalSource = settings->signalSource;
-	this->pwmValue = settings->pwmValue;
-	this->flashType = settings->flashType;
-	this->flashCount = settings->flashCount;
-	this->heater1 = settings->heater1;
-	this->heater2 = settings->heater2;
-	this->delayTimerValue = settings->delayTimerValue;
-	this->shutdownTimerValue = settings->shutdownTimerValue;
-	this->vCutOffValue = settings->vCutOffValue;
-	this->vAutoEnValue = settings->vAutoEnValue;
-	this->flashFreq = settings->flashFreq;
-	this->currCutOffValue = settings->currCutOffValue;
-	this->engineOn = settings->engineOn;
-	this->shutdownTimer = settings->shutdownTimer;
-	this->vCutOff = settings->vCutOff;
-	this->vAutoEn = settings->vAutoEn;
-	this->pwm = settings->pwm;
-	this->currCutOff = settings->currCutOff;
-	this->delayTimer = settings->delayTimer;
-	this->flash = settings->flash;
-
+	signalSource = settings->signalSource;
+	pwmValue = settings->pwmValue;
+	flashType = settings->flashType;
+	flashCount = settings->flashCount;
+	heater1 = settings->heater1;
+	heater2 = settings->heater2;
+	delayTimerValue = settings->delayTimerValue;
+	shutdownTimerValue = settings->shutdownTimerValue;
+	vCutOffValue = settings->vCutOffValue;
+	vAutoEnValue = settings->vAutoEnValue;
+	flashFreq = settings->flashFreq;
+	currCutOffValue = settings->currCutOffValue;
+	engineOn = settings->engineOn;
+	shutdownTimer = settings->shutdownTimer;
+	vCutOff = settings->vCutOff;
+	vAutoEn = settings->vAutoEn;
+	pwm = settings->pwm;
+	currCutOff = settings->currCutOff;
+	delayTimer = settings->delayTimer;
+	flash = settings->flash;
+	if (signalSource)
+		isActive = 1;
 	this->updateCh();
 }
 
-void OutputCh::buttonTriggered(uint8_t status)
+uint8_t OutputCh::isButtonTriggered()
 {
-	this->isButtonActiv = status;
-	if (status)
+	switch (signalSource)
 	{
-		this->timerShutdownInner = HAL_GetTick();
+	case DISABLECH:
+		return 0;
+		break;
+	case IGNITION:
+		return statusInstance->getIgnitionStatus();
+		break;
+
+	case REGULARCONS:
+		return 1;
+		break;
+
+	case LOBEAM:
+		return statusInstance->getLoBeam();
+		break;
+
+	case HIBEAM:
+		return statusInstance->getHiBeam();
+		break;
+
+	case ANYHEADLIGNT:
+		return statusInstance->getAnyBeam();
+		break;
+
+	case ANYTURNER:
+		return statusInstance->getAnyTurner();
+		break;
+
+	case LEFTTURNER:
+		return statusInstance->getLeftTurner();
+		break;
+
+	case RIGHTTURNER:
+		return statusInstance->getRightTurner();
+		break;
+
+	case EMERGENCYLIGHT:
+		return statusInstance->getEmergencyLight();
+		break;
+
+	case HEATER:
+		return statusInstance->getHeater();
+		break;
+
+	case STOPLIGHT:
+		return statusInstance->getStopLight();
+		break;
 	}
-	else
-	{
-		this->timerDelayInner = HAL_GetTick();
-	}
-	this->isActive = 0;
-	this->updateCh();
+	errorHandler(IS_BUT_TRIG_ERROR);
+	return 0;
 }
 
 void OutputCh::updataVoltage(uint16_t voltage)
@@ -71,145 +112,277 @@ void OutputCh::updataVoltage(uint16_t voltage)
 
 void OutputCh::updateCh()
 {
-	if (HAL_GetTick() - this->timerDelayInner > this->delayTimerValue && this->delayTimer)	this->isDelayExpired = 1;
-	if (HAL_GetTick() - this->shutdownTimer > this->shutdownTimerValue && this->shutdownTimer)	this->isTimerExpired = 1;
 
-	if (this->isActive == 0) //если канал отключен, то просто выключаем выходной мосфет
+	if (isButtonActiv != isButtonTriggered())	//если изменилось состояние входного сигнала (кнопки)
 	{
-		if (this->outputState) this->turnOffCh();
-		return;
-	}
-	//==============================================================
-	if (this->vCutOff && this->voltage < this->vCutOffValue && this->isActive && this->outputState) //если просело напряжение и активен контроль напр и канал вкл
-	{
-		this->turnOffCh();
-		return;
-	}
-	//==============================================================
-	if (this->isButtonActiv == 0 && this->outputState) //если входной сигнал отрицительный и канал активен
-	{
-		if(this->delayTimer)							//если установлен таймер задержки
+		if (isButtonTriggered())				//если кнопка включилась (1 или 2 для подогрева)
 		{
-			if (isDelayExpired) //если таймер вышел
+			timerShutdownInner = HAL_GetTick();
+			isButtonActiv = isButtonTriggered();
+			if (checkChCanBeOn())
 			{
-				this->turnOffCh();
-				return;
+				turnOnCh();
 			}
 		}
-		else //если нет таймера задержки выключения то просто выключаем
+		else									//если кнопка выключилась ( 0 )
 		{
-			this->turnOffCh();
-			return;
-		}
-	}
-	//==============================================================
-
-
-	if (this->isButtonActiv) //если кнопка активна
-	{
-		if (this->outputState)					//если сейчас включен мосфет
-		{
-			if (this->shutdownTimer && isTimerExpired) //если включен таймер выключения и время подошло
-			{
-				this->turnOffCh();
-				return;
-			}
-
-		}
-		else //если кнопка активна, но канал выключен
-		{
-			if (this->pwm && this->signalSource != HEATER)
-			{
-				this->turnOnPWMCh (this->pwmValue);
-				return;
-			}
-			if (this->signalSource == HEATER) //если выбран источник сигнала подогрев
-			{
-				if (this->isButtonActiv == 1)
-				{
-					this->turnOnPWMCh (this->heater1);
-				}
-				if (this->isButtonActiv == 2)
-				{
-					this->turnOnPWMCh (this->heater2);
-				}
-				return;
-			}
-			this->turnOnCh();
+			timerDelayInner = HAL_GetTick();
+			isButtonActiv = 0;
+			if (!delayTimer)
+				turnOffCh();
 		}
 	}
 
-// TODO: прописать выключение, если активен PWM или подогрев
-
-
-
+	//если состояние кнопки не менялось, то просто проверяем может ли канал работать (если состояние менялось, то в верхенем условии мы уже запишем значения таймоеров)
+	if (checkChCanBeOn())
+	{
+		turnOnCh();
+	}
+	else
+	{
+		turnOffCh();
+	}
 
 }
 
 void OutputCh::turnOffCh()
 {
-	if (this->gpioPinMosfet == 6 || this->gpioPinMosfet == 7 || this->gpioPinMosfet == 8 || this->gpioPinMosfet == 9)
+
+	if (outputState == 0)
+		return;
+
+	switch (gpioPinMosfet)
 	{
-		  TIM8->CCR1 = 0;
-		  TIM8->CCR2 = 0;
-		  TIM8->CCR3 = 0;
-		  TIM8->CCR4 = 0;
+	case 6:
+		TIM8->CCR1 = 0;
+		break;
+	case 7:
+		TIM8->CCR2 = 0;
+		break;
+	case 8:
+		TIM8->CCR3 = 0;
+		break;
+	case 9:
+		TIM8->CCR4 = 0;
+		break;
+	case 14:
+		TIM12->CCR1 = 0;
+		break;
+	case 15:
+		TIM12->CCR2 = 0;
+		break;
+	default:
+		errorHandler(TURN_OFF_ERROR);
 	}
-	HAL_GPIO_WritePin(this->gpioPortMosfet, this->gpioPinMosfet, GPIO_PIN_RESET);
-	this->outputState = 0;
+
+	outputState = 0;
 }
 
 void OutputCh::turnOnCh()
 {
-	if (this->gpioPinMosfet == 6 || this->gpioPinMosfet == 7 || this->gpioPinMosfet == 8 || this->gpioPinMosfet == 9)
+//	if (outputState) TODO прописать так, чтобы нормально работало с настройкой каналов
+//		return;
+
+	if (signalSource == HEATER)
 	{
-		  TIM8->CCR1 = 600;
-		  TIM8->CCR2 = 600;
-		  TIM8->CCR3 = 600;
-		  TIM8->CCR4 = 600;
+		if (isButtonActiv == 1)
+		{
+			switch (gpioPinMosfet)
+			{
+			case 6:
+				TIM8->CCR1 = PwmValCalculator(heater1);
+				break;
+			case 7:
+				TIM8->CCR2 = PwmValCalculator(heater1);
+				break;
+			case 8:
+				TIM8->CCR3 = PwmValCalculator(heater1);
+				break;
+			case 9:
+				TIM8->CCR4 = PwmValCalculator(heater1);
+				break;
+			case 14:
+				TIM12->CCR1 = PwmValCalculator(heater1);
+				break;
+			case 15:
+				TIM12->CCR2 = PwmValCalculator(heater1);
+				break;
+			default:
+				errorHandler(TURN_ON_ERROR);
+			}
+			outputState = 1;
+			return;
+		}
+		else if (isButtonActiv == 2)
+		{
+			switch (gpioPinMosfet)
+			{
+			case 6:
+				TIM8->CCR1 = PwmValCalculator(heater1);
+				break;
+			case 7:
+				TIM8->CCR2 = PwmValCalculator(heater1);
+				break;
+			case 8:
+				TIM8->CCR3 = PwmValCalculator(heater1);
+				break;
+			case 9:
+				TIM8->CCR4 = PwmValCalculator(heater1);
+				break;
+			case 14:
+				TIM12->CCR1 = PwmValCalculator(heater1);
+				break;
+			case 15:
+				TIM12->CCR2 = PwmValCalculator(heater1);
+				break;
+			default:
+				errorHandler(TURN_ON_ERROR);
+			}
+			outputState = 1;
+			return;
+		}
+		else
+		{
+			errorHandler(TURN_ON_HEATER_ERROR);
+			return;
+		}
 	}
-	HAL_GPIO_WritePin(this->gpioPortMosfet, this->gpioPinMosfet, GPIO_PIN_SET);
-	this->outputState = 1;
-}
 
-
-void OutputCh::turnOnPWMCh(uint32_t pwmValInner)
-{
-	switch (this->pin)
+	if (pwm)
 	{
-	case 6:
-		TIM8->CCR1 = pwmValInner;
-		HAL_TIM_PWM_Start(this->PWMtim, TIM_CHANNEL_1);
-		this->outputState = 1;
-		break;
-	case 7:
-		TIM8->CCR1 = pwmValInner;
-		HAL_TIM_PWM_Start(this->PWMtim, TIM_CHANNEL_2);
-		this->outputState = 1;
-		break;
-	case 8:
-		TIM8->CCR1 = pwmValInner;
-		HAL_TIM_PWM_Start(this->PWMtim, TIM_CHANNEL_3);
-		this->outputState = 1;
-		break;
-	case 9:
-		TIM8->CCR1 = pwmValInner;
-		HAL_TIM_PWM_Start(this->PWMtim, TIM_CHANNEL_4);
-		this->outputState = 1;
-		break;
-	default:
-		break;
+		switch (gpioPinMosfet)
+		{
+		case 6:
+			TIM8->CCR1 = PwmValCalculator(pwmValue);
+			break;
+		case 7:
+			TIM8->CCR2 = PwmValCalculator(pwmValue);
+			break;
+		case 8:
+			TIM8->CCR3 = PwmValCalculator(pwmValue);
+			break;
+		case 9:
+			TIM8->CCR4 = PwmValCalculator(pwmValue);
+			break;
+		case 14:
+			TIM12->CCR1 = PwmValCalculator(pwmValue);
+			break;
+		case 15:
+			TIM12->CCR2 = PwmValCalculator(pwmValue);
+			break;
+		default:
+			errorHandler(TURN_ON_ERROR);
+		}
+
 	}
+	else
+	{
+		switch (gpioPinMosfet)
+		{
+		case 6:
+			TIM8->CCR1 = MAX_PWM_VAL;
+			break;
+		case 7:
+			TIM8->CCR2 = MAX_PWM_VAL;
+			break;
+		case 8:
+			TIM8->CCR3 = MAX_PWM_VAL;
+			break;
+		case 9:
+			TIM8->CCR4 = MAX_PWM_VAL;
+			break;
+		case 14:
+			TIM12->CCR1 = MAX_PWM_VAL;
+			break;
+		case 15:
+			TIM12->CCR2 = MAX_PWM_VAL;
+			break;
+		default:
+			errorHandler(TURN_ON_ERROR);
+		}
+	}
+
+	outputState = 1;
 }
 
-OutputCh::OutputCh(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, TIM_HandleTypeDef* PWMtim)
+uint8_t OutputCh::checkChCanBeOn()
 {
-	this->gpioPortMosfet = GPIOx;
-	this->gpioPinMosfet = GPIO_Pin;
-	this->PWMtim = PWMtim;
+	if (isActive == 0)
+	{
+		return 0;
+	}
+
+	//если включена опция "только при раб. двиг." и двигатель заглушен
+	if (engineOn && !statusInstance->getEngineStatus())
+	{
+		return 0;
+	}
+
+	//если активен контроль напряжения канала и напряжение просело
+	if (vCutOff && voltage < vCutOffValue)
+	{
+		return 0;
+	}
+
+	// ЗАДЕРЖКА ВЫКЛЮЧЕНИЯ если активен таймер и записанный таймер не ноль (т.е. если произошло событие для начала отсчета таймера) и время вышло
+	if (delayTimer && timerDelayInner && (HAL_GetTick() - timerDelayInner > delayTimerValue))
+	{
+		return 0;
+	}
+
+	//если входной сигнал отрицительный
+	if (isButtonActiv == 0)
+	{
+		if(delayTimer && timerDelayInner && (HAL_GetTick() - timerDelayInner < delayTimerValue))	//если установлен таймер задержки и произошло событие запуска таймера задержки и время не вышло
+		{
+			return 1;
+		}
+		else //если нет таймера задержки выключения или он вышел то просто выключаем
+		{
+			return 0;
+		}
+	}
+
+
+	//если нажата кнопка
+	if (isButtonActiv)
+	{
+
+		if (shutdownTimer && timerShutdownInner && (HAL_GetTick() - timerShutdownInner > shutdownTimerValue)) //если включен таймер выключения и время подошло
+		{
+			return 0;
+		}
+
+		else
+		{
+			return 1;
+		}
+	}
+
+
+	return 0; //если ни одно из условий почему-то не выполнилось
+}
+
+OutputCh::OutputCh(GPIO_TypeDef* GPIOx, uint8_t GPIO_Pin, TIM_HandleTypeDef* PWMtim, status *data)
+	: statusInstance(data), gpioPortMosfet(GPIOx), gpioPinMosfet(GPIO_Pin), PWMtim(PWMtim)
+{
+//	this->gpioPortMosfet = GPIOx;
+//	this->gpioPinMosfet = GPIO_Pin;
+//	this->PWMtim = PWMtim;
+}
+
+uint16_t OutputCh::PwmValCalculator(uint8_t val)
+{
+	if(val > 100)
+		{
+			val = 100;
+		}
+	return (uint16_t)(MAX_PWM_VAL * val / 100);
 }
 
 
+void OutputCh::errorHandler(ERROR_TYPEDEF err)
+{
 
-
+}
 

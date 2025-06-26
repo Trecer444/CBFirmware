@@ -54,10 +54,11 @@ uint8_t Param::setParam(char *paramString)
 	{
 		charLenght++;
 	}
+
 	uint16_t arr[20];
 	for (uint8_t k = 0; k < 20; k++) arr[k] = 0;
 	uint8_t ch = 0, index = 0;
-	for (uint16_t i = 0; i < charLenght - 1; i++)
+	for (uint16_t i = 0; i < charLenght; i++)
 	{
 		if (paramString[i]=='*' || paramString[i] == '\n')			//если нашли конец строки то завершаем
 			break;
@@ -485,4 +486,9 @@ void Param::composeAllParamsString(char *outString)
 
 	outString[pos++] = '*';
 	outString[pos] = '\0';
+}
+
+chSpec*  Param::getChSpec(uint8_t chN)
+{
+	return &chSettings[chN];
 }

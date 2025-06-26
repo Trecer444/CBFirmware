@@ -1,5 +1,7 @@
 /*
  * status.h
+ * Глобальный статус состояний мотоцикла.
+ * По сути в нем хранятся состояния всех входов, при этом этот класс мы передаем в outputch, и там он обрабатывается уже каждым каналом отдельно.
  *
  *  Created on: Jun 21, 2025
  *      Author: Admin
@@ -15,7 +17,8 @@ private:
 	uint8_t
 		engineRunStatus;
 	uint16_t
-		voltage;
+		voltage,
+		currents[6];
 	uint8_t
 		bIgnition,
 		bLoBeam,
@@ -25,15 +28,17 @@ private:
 		bLeftTurner,
 		bAnyTurner,
 		bEmergencyLight,
-		bHeater1,
-		bHeater2,
-		bStopLight;
+		bHeater,			//единственная небулева переменная, может принимать 0(выкл), 1 и 2 (ступени подогрева)
+		bStopLight,
+
+		engineStatus;		//включен ли двигатель
 	void updateAnyBeam();
 	void updateAnyTurner();
 
 public:
 	status();
 	virtual ~status();
+	void setCurrents(uint16_t ch0, uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4, uint16_t ch5);
 	void setVoltage(uint16_t v);
 	void setIgnitionOn();
 	void setIgnitionOff();
@@ -47,16 +52,15 @@ public:
 	void setLeftTurnerOff();
 	void setEmergencyLightOn();
 	void setEmergencyLightOff();
-	void setbHeater1On();
-	void setHeater1Off();
-	void setHeater2On();
-	void setHeater2Off();
+	void setHeaterOn(uint8_t val); //1 или 2 ступень
+	void setHeaterOff();
 	void setStopLightOn();
 	void setStopLightOff();
 
 
+	uint16_t getCurrent(uint8_t chInd);
 	uint16_t getVoltage();
-	uint8_t getIgnition();
+	uint8_t getIgnitionStatus();
 	uint8_t getLoBeam();
 	uint8_t getHiBeam();
 	uint8_t getAnyBeam(); // если есть флаг bAnyBeam
@@ -64,9 +68,9 @@ public:
 	uint8_t getLeftTurner();
 	uint8_t getAnyTurner(); // если есть флаг bAnyTurner
 	uint8_t getEmergencyLight();
-	uint8_t getHeater1();
-	uint8_t getHeater2();
+	uint8_t getHeater();
 	uint8_t getStopLight();
+	uint8_t getEngineStatus();
 };
 #endif /* INC_STATUS_H_ */
 
