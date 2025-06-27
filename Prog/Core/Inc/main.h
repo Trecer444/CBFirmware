@@ -108,8 +108,8 @@ void setChSettings();
 
 /* USER CODE BEGIN Private defines */
 #define CANFILTER_1 			0x2D0 //подогрев
-#define CANFILTER_2				0x00
-#define CANFILTER_3				0x00
+#define CANFILTER_2				0x130
+#define CANFILTER_3				0x10C
 #define CANFILTER_4				0x00
 #define CANFILTER_5				0x00
 #define CANFILTER_6				0x00

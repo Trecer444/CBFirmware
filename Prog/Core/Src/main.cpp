@@ -286,11 +286,15 @@ int main(void)
 
 
     	processUsbCommand();
-    	for (int i = 0; i < 6; i++)
+    	if (updTimer >= 18)
     	{
-    		CH[i]->updateCh();
+    		for (int i = 0; i < 6; i++)
+    		{
+    			CH[i]->updateCh();
+    		}
+    		updTimer = 0;
     	}
-    	HAL_Delay(15);
+    	HAL_Delay(5);
 
     /* USER CODE END WHILE */
 
@@ -633,7 +637,7 @@ static void MX_TIM8_Init(void)
 
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
-  htim8.Init.Prescaler = 359;
+  htim8.Init.Prescaler = 699;//359
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim8.Init.Period = 399;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -715,12 +719,12 @@ static void MX_TIM12_Init(void)
   TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM12_Init 1 */
-
+//TODO ПРОВЕРИТЬ ЧТО НЕ ИЗМЕНИЛСЯ ПЕРИОД (Должен быть 399)
   /* USER CODE END TIM12_Init 1 */
   htim12.Instance = TIM12;
-  htim12.Init.Prescaler = 359;
+  htim12.Init.Prescaler = 699;//359
   htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim12.Init.Period = 359;
+  htim12.Init.Period = 399;
   htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim12.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim12) != HAL_OK)
@@ -886,6 +890,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM3) //каждую милисекунду
 	{
 		msFromStart++;
+		currStatus.updateStatusTimers();
 		if (updTimer >=20)
 		{
 			updTimer = 0;

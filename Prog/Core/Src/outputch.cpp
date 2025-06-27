@@ -29,8 +29,8 @@ void OutputCh::setChSettingsCh(chSpec* settings)
 	flashCount = settings->flashCount;
 	heater1 = settings->heater1;
 	heater2 = settings->heater2;
-	delayTimerValue = settings->delayTimerValue;
-	shutdownTimerValue = settings->shutdownTimerValue;
+	delayTimerValue = settings->delayTimerValue * 1000;			//перевод из мс в с
+	shutdownTimerValue = settings->shutdownTimerValue * 1000;	//перевод из мс в с
 	vCutOffValue = settings->vCutOffValue;
 	vAutoEnValue = settings->vAutoEnValue;
 	flashFreq = settings->flashFreq;
@@ -218,22 +218,22 @@ void OutputCh::turnOnCh()
 			switch (gpioPinMosfet)
 			{
 			case 6:
-				TIM8->CCR1 = PwmValCalculator(heater1);
+				TIM8->CCR1 = PwmValCalculator(heater2);
 				break;
 			case 7:
-				TIM8->CCR2 = PwmValCalculator(heater1);
+				TIM8->CCR2 = PwmValCalculator(heater2);
 				break;
 			case 8:
-				TIM8->CCR3 = PwmValCalculator(heater1);
+				TIM8->CCR3 = PwmValCalculator(heater2);
 				break;
 			case 9:
-				TIM8->CCR4 = PwmValCalculator(heater1);
+				TIM8->CCR4 = PwmValCalculator(heater2);
 				break;
 			case 14:
-				TIM12->CCR1 = PwmValCalculator(heater1);
+				TIM12->CCR1 = PwmValCalculator(heater2);
 				break;
 			case 15:
-				TIM12->CCR2 = PwmValCalculator(heater1);
+				TIM12->CCR2 = PwmValCalculator(heater2);
 				break;
 			default:
 				errorHandler(TURN_ON_ERROR);
@@ -324,8 +324,8 @@ uint8_t OutputCh::checkChCanBeOn()
 		return 0;
 	}
 
-	// ЗАДЕРЖКА ВЫКЛЮЧЕНИЯ если активен таймер и записанный таймер не ноль (т.е. если произошло событие для начала отсчета таймера) и время вышло
-	if (delayTimer && timerDelayInner && (HAL_GetTick() - timerDelayInner > delayTimerValue))
+	// включение на время (shutdown записывается при включении), через shutdowntimerVALUE нужно выключить
+	if (shutdownTimer && timerShutdownInner && (HAL_GetTick() - timerShutdownInner > shutdownTimerValue))
 	{
 		return 0;
 	}

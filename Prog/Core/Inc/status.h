@@ -10,12 +10,12 @@
 #ifndef INC_STATUS_H_
 #define INC_STATUS_H_
 
+#define STATUS_MSG_TIMEOUT		100 //через сколько циклов по 10 мс (таймер 3) статус сменится на 0, если не было вызова метода включения
+
 #include "stdint.h"
 
 class status {
 private:
-	uint8_t
-		engineRunStatus;
 	uint16_t
 		voltage,
 		currents[6];
@@ -30,8 +30,19 @@ private:
 		bEmergencyLight,
 		bHeater,			//единственная небулева переменная, может принимать 0(выкл), 1 и 2 (ступени подогрева)
 		bStopLight,
-
 		engineStatus;		//включен ли двигатель
+
+	uint16_t
+		timerEngineOn,
+		timerIgnition,
+		timerLoBeam,
+		timerHiBeam,
+		timerLeftTurner,
+		timerRightTurner,
+		timerEmergencyLight,
+		timerHeater,
+		timerStoplight;
+
 	void updateAnyBeam();
 	void updateAnyTurner();
 
@@ -56,6 +67,8 @@ public:
 	void setHeaterOff();
 	void setStopLightOn();
 	void setStopLightOff();
+	void setEngineOn();
+	void setEngineOff();
 
 
 	uint16_t getCurrent(uint8_t chInd);
@@ -71,6 +84,8 @@ public:
 	uint8_t getHeater();
 	uint8_t getStopLight();
 	uint8_t getEngineStatus();
+
+	void updateStatusTimers();
 };
 #endif /* INC_STATUS_H_ */
 

@@ -45,35 +45,37 @@ void canHandler::peocessCanMessage(CAN_RxHeaderTypeDef* header, uint8_t* data) {
 
 }
 
-// Пустые обработчики сообщений (будут заполнены позже)
+
 void canHandler::handleEngineOn(uint8_t* data)
 {
-	// Заглушка - будет реализована позже
+	if (data[ENGINE_ON_BYTE] == ENGINE_VAL_OFF)
+	{
+		m_status->setEngineOff();
+	}
+	else
+	{
+		m_status->setEngineOn();
+	}
 }
 
 void canHandler::handleIgnition(uint8_t* data)
 {
-	if (data[IGNITION_BYTE] == IGNITION_VAL_ON)
+	m_status->setIgnitionOn();	//просто наличие пакета говорит о включеном зажигании
+}
+
+void canHandler::handleLoBeam(uint8_t* data)	//TODO сейчас обрабатывается работающий двигатель вместо ближнего света
+{
+	if (data[ENGINE_ON_BYTE] == ENGINE_VAL_OFF)
 	{
-		m_status->setIgnitionOn();
+		m_status->setLoBeamOff();
 	}
 	else
 	{
-		m_status->setIgnitionOff();
+		m_status->setLoBeamOn();
 	}
 }
 
-void canHandler::handleLoBeam(uint8_t* data)
-{
-	// Заглушка - будет реализована позже
-}
-
 void canHandler::handleHiBeam(uint8_t* data)
-{
-	// Заглушка - будет реализована позже
-}
-
-void canHandler::handleLeftTurner(uint8_t* data)
 {
 	if ((data[HI_BEAM_BYTE] & HI_BEAM_MASK) == HI_BEAM_VAL_ON)
 	{
@@ -85,27 +87,53 @@ void canHandler::handleLeftTurner(uint8_t* data)
 	}
 }
 
+void canHandler::handleLeftTurner(uint8_t* data)
+{
+	if (data[TURNERS_BYTE] == LEFTTURNER_VAL)
+	{
+		m_status->setLeftTurnerOn();
+	}
+	else
+	{
+		m_status->setLeftTurnerOff();
+	}
+}
+
 void canHandler::handleRightTurner(uint8_t* data)
 {
-	// Заглушка - будет реализована позже
+	if (data[TURNERS_BYTE] == RIGHTTURNER_VAL)
+	{
+		m_status->setRightTurnerOn();
+	}
+	else
+	{
+		m_status->setRightTurnerOff();
+	}
 }
 
 void canHandler::handleEmergencyLight(uint8_t* data)
 {
-	// Заглушка - будет реализована позже
+	if (data[TURNERS_BYTE] == EMERGENCYLIGHT_VAL)
+		{
+			m_status->setEmergencyLightOn();
+		}
+		else
+		{
+			m_status->setEmergencyLightOff();
+		}
 }
 
 void canHandler::handleHeater(uint8_t* data)
 {
-	if ((data[HEATER_BYTE] & HEATER_MASK) == HEATER_VAL_OFF)
+	if (data[HEATER_BYTE] == HEATER_VAL_OFF)
 	{
 		m_status->setHeaterOff();
 	}
-	else if ((data[HEATER_BYTE] & HEATER_MASK) == HEATER_VAL_1)
+	else if (data[HEATER_BYTE] == HEATER_VAL_1)
 	{
 		m_status->setHeaterOn(1);
 	}
-	else if ((data[HEATER_BYTE] & HEATER_MASK) == HEATER_VAL_2)
+	else if (data[HEATER_BYTE] == HEATER_VAL_2)
 	{
 		m_status->setHeaterOn(2);
 	}

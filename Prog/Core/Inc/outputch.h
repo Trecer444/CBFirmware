@@ -8,7 +8,7 @@
 #ifndef INC_OUTPUTCH_H_
 #define INC_OUTPUTCH_H_
 
-#define MAX_PWM_VAL 359
+#define MAX_PWM_VAL 399
 
 #include "stm32f4xx.h"
 #include "stdint.h"
@@ -72,9 +72,10 @@ private:
 			 voltage,								//хранит текущее значение напряжения
 			 current;								//хранит данные о токе через мосфет
 	uint32_t
-			 timerDelayInner,						//ЗАПИСАТЬ ПРИ ПРОПАДАНИИ СИГНАЛА ВКЛЮЧЕНИЯ КАНАЛА TODO прописать куда-то ??
-			 timerShutdownInner;					//ЗАПИСАТЬ ПРИ ВКЛЮЧЕНИИ КАНАЛА
-
+			 timerDelayInner,						//ЗАПИСАТЬ ПРИ ПРОПАДАНИИ СИГНАЛА ВКЛЮЧЕНИЯ КАНАЛА
+			 timerShutdownInner,					//ЗАПИСАТЬ ПРИ ВКЛЮЧЕНИИ КАНАЛА
+			 delayTimerValue,						//задержка выключения							TODO переписать чтобы было в соответствии с HAL_Gettick()
+			 shutdownTimerValue;					//выключение по таймеру с активным сигналом
 
 	TIM_HandleTypeDef* PWMtim;
 
@@ -85,8 +86,6 @@ private:
         flashCount,
         heater1,									//значение ШИМ для 1 ступени подогрева
         heater2,									//значение ШИМ для 2 ступени подогрева
-        delayTimerValue,							//задержка выключения							TODO переписать чтобы было в соответствии с HAL_Gettick()
-        shutdownTimerValue,							//выключение по таймеру с активным сигналом		TODO переписать чтобы было в соответствии с HAL_Gettick()
         vCutOffValue,
         vAutoEnValue,
         flashFreq,
