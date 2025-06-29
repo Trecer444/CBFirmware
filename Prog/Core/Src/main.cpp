@@ -67,6 +67,8 @@ DMA_HandleTypeDef hdma_adc1;
 
 CAN_HandleTypeDef hcan1;
 
+IWDG_HandleTypeDef hiwdg;
+
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
@@ -82,8 +84,8 @@ uint8_t rxData[RX_LENGHT];			//данные с ком-порта;
 uint16_t rxIndex = 0;				//указатель на элемент массива rxData для побайтового вычитывания из буфера ком-порта
 Param param;
 uint16_t 	secFromStart = 0,
-			msFromStart = 0,
 			updTimer = 0;
+uint32_t	msFromStart = 0;
 uint8_t flagUpdCh = 0;
 
 uint16_t adc_raw[ADC_CHANNEL_COUNT];        // Сырые значения из DMA
@@ -108,6 +110,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM12_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -145,6 +148,8 @@ int main(void)
   /* USER CODE BEGIN 1 */
   /* Configure the vector table base address. */
   VectorBase_Config();
+  __HAL_DBGMCU_FREEZE_IWDG();
+
 
   OutputCh CH0(GPIOB,  14, &htim12, &currStatus);
   OutputCh CH1(GPIOB,  15, &htim12, &currStatus);
@@ -188,6 +193,7 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM8_Init();
   MX_TIM12_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   /* Initialize the user program application. */
   AppInit();
@@ -236,15 +242,11 @@ int main(void)
   HAL_CAN_Start(&hcan1);
   HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING | CAN_IT_RX_FIFO1_MSG_PENDING);
   //=============================================CAN CONFIG END
-  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
-  HAL_Delay(500);
-  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
-
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_raw, ADC_CHANNEL_COUNT);
-
 
   HAL_TIM_Base_Start_IT(&htim2);	//прерывания каждую секунду
   HAL_TIM_Base_Start_IT(&htim3);	//прерывания каждую мс
+
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_raw, ADC_CHANNEL_COUNT);
 
 
   TIM8->CCR1 = 0;
@@ -264,6 +266,11 @@ int main(void)
 
 
   __enable_irq();
+
+  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
+  HAL_Delay(500);
+  HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+
 //  param.saveToFlash();
   param.readFromFlash();
 
@@ -273,6 +280,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  HAL_PWR_EnterSLEEPMode(PWR_LOWPOWERREGULATOR_ON, PWR_SLEEPENTRY_WFI); //загоняем МК в спячку
   while (1)
   {
 //    	CH[3]->turnOnCh();
@@ -285,16 +293,7 @@ int main(void)
 //    	HAL_Delay(300);
 
 
-    	processUsbCommand();
-    	if (updTimer >= 18)
-    	{
-    		for (int i = 0; i < 6; i++)
-    		{
-    			CH[i]->updateCh();
-    		}
-    		updTimer = 0;
-    	}
-    	HAL_Delay(5);
+/*=================================================MAIN==============================================================*/
 
     /* USER CODE END WHILE */
 
@@ -321,8 +320,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_LSI|RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
@@ -527,6 +527,34 @@ static void MX_CAN1_Init(void)
 }
 
 /**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Reload = 100;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
+
+}
+
+/**
   * @brief TIM2 Initialization Function
   * @param None
   * @retval None
@@ -605,7 +633,7 @@ static void MX_TIM3_Init(void)
     Error_Handler();
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
@@ -637,7 +665,7 @@ static void MX_TIM8_Init(void)
 
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
-  htim8.Init.Prescaler = 699;//359
+  htim8.Init.Prescaler = 699;
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim8.Init.Period = 399;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -719,10 +747,10 @@ static void MX_TIM12_Init(void)
   TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM12_Init 1 */
-//TODO ПРОВЕРИТЬ ЧТО НЕ ИЗМЕНИЛСЯ ПЕРИОД (Должен быть 399)
+
   /* USER CODE END TIM12_Init 1 */
   htim12.Instance = TIM12;
-  htim12.Init.Prescaler = 699;//359
+  htim12.Init.Prescaler = 699;
   htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim12.Init.Period = 399;
   htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -882,26 +910,39 @@ static void MX_GPIO_Init(void)
 //================================================================TIMERS================================================================
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+//	__disable_irq();
 	if(htim->Instance == TIM2)//каждую секунду
 	{
 		secFromStart++;
-        HAL_GPIO_TogglePin(GPIOB, LED_Pin);
+		HAL_GPIO_TogglePin(GPIOB, LED_Pin);
 	}
+
 	if(htim->Instance == TIM3) //каждую милисекунду
 	{
+		HAL_IWDG_Refresh(&hiwdg);
+		processUsbCommand(); 						//обрабатываем ЮСБ
+
 		msFromStart++;
 		currStatus.updateStatusTimers();
+
 		if (updTimer >=20)
 		{
+			HAL_NVIC_DisableIRQ(TIM3_IRQn);
+			HAL_NVIC_DisableIRQ(TIM2_IRQn);										//TODO проверить что временное отключение таймера не приведет к ошибкам работы
+			for (int i = 0; i < 6; i++)
+			{
+				CH[i]->updateCh();
+			}
 			updTimer = 0;
-			flagUpdCh = 1;
+			HAL_NVIC_EnableIRQ(TIM3_IRQn);
+			HAL_NVIC_EnableIRQ(TIM2_IRQn);										//TODO проверить что временное отключение таймера не приведет к ошибкам работы
 		}
 		else
 		{
 			updTimer++;
 		}
 	}
-
+//	__enable_irq();
 }
 
 //================================================================ADC================================================================
@@ -930,7 +971,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 	{
 
 		canMsgHandler.peocessCanMessage(&rxCanHeader, rxCanData);
-		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+//		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
 	}
 }
 
@@ -955,8 +996,11 @@ void processUsbCommand()
 	uint16_t bytesAvailable = CDC_GetRxBufferBytesAvailable_FS();
 	if (bytesAvailable > 0)
 	{
+		HAL_NVIC_DisableIRQ(TIM3_IRQn);
+		HAL_NVIC_DisableIRQ(TIM2_IRQn);										//TODO проверить что временное отключение таймера не приведет к ошибкам работы
 		while (bytesAvailable--)
 		{
+			HAL_IWDG_Refresh(&hiwdg);
 			uint8_t byte;
 			if (CDC_ReadRxBuffer_FS(&byte, 1) != USB_CDC_RX_BUFFER_OK)
 				break;
@@ -980,18 +1024,8 @@ void processUsbCommand()
 				rxIndex = 0;
 			}
 		}
-//				HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_SET);
-//				uint16_t bytesToRead = bytesAvailable < 8 ? 8 : bytesAvailable;
-//				if (CDC_ReadRxBuffer_FS(rxData, bytesToRead) == USB_CDC_RX_BUFFER_OK)
-//				{
-//					uint8_t recived[] = "RECIVED\n";
-//					while (CDC_Transmit_FS(recived, 8) != USBD_OK);
-//					param.setParam((char*)rxData);
-//					param.saveToFlash();
-//
-//				}
-//				CDC_FlushRxBuffer_FS();
-//				HAL_GPIO_WritePin(GPIOB, LED_Pin, GPIO_PIN_RESET);
+		HAL_NVIC_EnableIRQ(TIM3_IRQn);
+		HAL_NVIC_EnableIRQ(TIM2_IRQn);
 	}
 }
 

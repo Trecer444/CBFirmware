@@ -45,6 +45,14 @@ void OutputCh::setChSettingsCh(chSpec* settings)
 	flash = settings->flash;
 	if (signalSource)
 		isActive = 1;
+	if (signalSource == REGULARCONS || signalSource == HEATER) //в этих режимах таймер задержки выключения неактивен
+	{
+		delayTimer = 0;
+	}
+	if (signalSource == REGULARCONS) 		//в этом режиме "только при раб. двиг" неактивно
+	{
+		engineOn = 0;
+	}
 	this->updateCh();
 }
 

@@ -74,7 +74,7 @@ private:
 	uint32_t
 			 timerDelayInner,						//ЗАПИСАТЬ ПРИ ПРОПАДАНИИ СИГНАЛА ВКЛЮЧЕНИЯ КАНАЛА
 			 timerShutdownInner,					//ЗАПИСАТЬ ПРИ ВКЛЮЧЕНИИ КАНАЛА
-			 delayTimerValue,						//задержка выключения							TODO переписать чтобы было в соответствии с HAL_Gettick()
+			 delayTimerValue,						//задержка выключения
 			 shutdownTimerValue;					//выключение по таймеру с активным сигналом
 
 	TIM_HandleTypeDef* PWMtim;

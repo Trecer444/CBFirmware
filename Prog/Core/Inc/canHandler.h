@@ -22,7 +22,7 @@
 
 #define CAN_ID_IGNITION				0x130 	//просто наличие пакета
 
-#define CAN_ID_LOBEAM 				0x10C	//TODO прописать какое-то значение для света
+#define CAN_ID_LOBEAM 				0x10C
 #define LO_BEAM_BYTE				3
 #define LO_BEAM_VAL_OFF				0x0
 
