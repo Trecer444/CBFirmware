@@ -38,7 +38,14 @@ status::~status() {
 
 
 uint16_t status::getVoltage() 				{ return voltage; }
-uint16_t status::getCurrent(uint8_t chInd) 	{return currents[chInd]; }
+uint16_t status::getCurrent(uint8_t chInd)
+{
+	if (chInd <= 5)
+	{
+		return currents[chInd];
+	}
+	return 65535;					//отключит канал
+}
 
 uint8_t status::getIgnitionStatus() 		{ return bIgnition; }
 uint8_t status::getEngineStatus()		{return engineStatus;}

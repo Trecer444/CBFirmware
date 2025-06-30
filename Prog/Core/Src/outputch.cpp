@@ -111,16 +111,8 @@ uint8_t OutputCh::isButtonTriggered()
 	return 0;
 }
 
-void OutputCh::updataVoltage(uint16_t voltage)
-{
-	this->voltage = voltage;
-
-	this->updateCh();
-}
-
 void OutputCh::updateCh()
 {
-
 	if (isButtonActiv != isButtonTriggered())	//если изменилось состояние входного сигнала (кнопки)
 	{
 		if (isButtonTriggered())				//если кнопка включилась (1 или 2 для подогрева)
@@ -320,6 +312,13 @@ uint8_t OutputCh::checkChCanBeOn()
 		return 0;
 	}
 
+	//если включен контроль напряжения и у нас есть перегрузка по току 			TODO возможно следует добавить попытку повторного включения через какое-то время
+	if (currCutOff && statusInstance->getCurrent(chNum) > currCutOffValue)
+	{
+		isActive = 0;
+		return 0;
+	}
+
 	//если включена опция "только при раб. двиг." и двигатель заглушен
 	if (engineOn && !statusInstance->getEngineStatus())
 	{
@@ -327,7 +326,7 @@ uint8_t OutputCh::checkChCanBeOn()
 	}
 
 	//если активен контроль напряжения канала и напряжение просело
-	if (vCutOff && voltage < vCutOffValue)
+	if (vCutOff && statusInstance->getVoltage() < vCutOffValue)
 	{
 		return 0;
 	}
@@ -371,8 +370,8 @@ uint8_t OutputCh::checkChCanBeOn()
 	return 0; //если ни одно из условий почему-то не выполнилось
 }
 
-OutputCh::OutputCh(GPIO_TypeDef* GPIOx, uint8_t GPIO_Pin, TIM_HandleTypeDef* PWMtim, status *data)
-	: statusInstance(data), gpioPortMosfet(GPIOx), gpioPinMosfet(GPIO_Pin), PWMtim(PWMtim)
+OutputCh::OutputCh(GPIO_TypeDef* GPIOx, uint8_t GPIO_Pin, TIM_HandleTypeDef* PWMtim, status *data, uint8_t chNum_)
+	: chNum(chNum_), statusInstance(data), gpioPortMosfet(GPIOx), gpioPinMosfet(GPIO_Pin), PWMtim(PWMtim)
 {
 //	this->gpioPortMosfet = GPIOx;
 //	this->gpioPinMosfet = GPIO_Pin;

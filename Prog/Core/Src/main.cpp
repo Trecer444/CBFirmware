@@ -151,12 +151,12 @@ int main(void)
   __HAL_DBGMCU_FREEZE_IWDG();
 
 
-  OutputCh CH0(GPIOB,  14, &htim12, &currStatus);
-  OutputCh CH1(GPIOB,  15, &htim12, &currStatus);
-  OutputCh CH2(GPIOC,  6, &htim8, &currStatus);
-  OutputCh CH3(GPIOC,  7, &htim8, &currStatus);
-  OutputCh CH4(GPIOC,  8, &htim8, &currStatus);
-  OutputCh CH5(GPIOC,  9, &htim8, &currStatus);
+  OutputCh CH0(GPIOB,  14, &htim12, &currStatus, 0);
+  OutputCh CH1(GPIOB,  15, &htim12, &currStatus, 1);
+  OutputCh CH2(GPIOC,  6, &htim8, &currStatus, 2);
+  OutputCh CH3(GPIOC,  7, &htim8, &currStatus, 3);
+  OutputCh CH4(GPIOC,  8, &htim8, &currStatus, 4);
+  OutputCh CH5(GPIOC,  9, &htim8, &currStatus, 5);
   CH[0] = &CH0;
   CH[1] = &CH1;
   CH[2] = &CH2;
@@ -952,12 +952,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 	{
 		adc_filtered.VCC      = (adc_filtered.VCC     * FILTER + (uint16_t)((float)adc_raw[0] * (float)(3300.0f / 4095.0f * 4.615f))) / (FILTER + 1);
 
-		adc_filtered.CH0      = (adc_filtered.CH0     * FILTER + adc_raw[1]) / (FILTER + 1);
-		adc_filtered.CH1      = (adc_filtered.CH1     * FILTER + adc_raw[2]) / (FILTER + 1);
-		adc_filtered.CH2      = (adc_filtered.CH2     * FILTER + adc_raw[3]) / (FILTER + 1);
-		adc_filtered.CH3      = (adc_filtered.CH3     * FILTER + adc_raw[4]) / (FILTER + 1);
-		adc_filtered.CH4      = (adc_filtered.CH4     * FILTER + adc_raw[5]) / (FILTER + 1);
-		adc_filtered.CH5      = (adc_filtered.CH5     * FILTER + adc_raw[6]) / (FILTER + 1);
+		adc_filtered.CH0      = (adc_filtered.CH0     * FILTER + (uint16_t)((float) adc_raw[1] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1); //значения токов по каналам
+		adc_filtered.CH1      = (adc_filtered.CH1     * FILTER + (uint16_t)((float) adc_raw[2] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1);
+		adc_filtered.CH2      = (adc_filtered.CH2     * FILTER + (uint16_t)((float) adc_raw[3] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1);
+		adc_filtered.CH3      = (adc_filtered.CH3     * FILTER + (uint16_t)((float) adc_raw[4] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1);
+		adc_filtered.CH4      = (adc_filtered.CH4     * FILTER + (uint16_t)((float) adc_raw[5] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1);
+		adc_filtered.CH5      = (adc_filtered.CH5     * FILTER + (uint16_t)((float) adc_raw[6] * (float)(3300.0f / 4095.0f * 30.30f))) / (FILTER + 1);
 
 		adc_filtered.Temperature  = (adc_filtered.Temperature * FILTER + adc_raw[7]) / (FILTER + 1);
 		adc_filtered.Vref         = (adc_filtered.Vref        * FILTER + (uint16_t)((float)(3300.0f * VREF_CAL) / (float)adc_raw[8])) / (FILTER + 1);
